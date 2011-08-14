@@ -1,0 +1,10 @@
+#!/bin/sh
+# [Gedit Tool]
+# Name=Open in Firefox
+# Shortcut=<Shift>F5
+# Applicability=all
+# Output=output-panel
+# Input=document
+# Save-files=document
+
+firefox $GEDIT_CURRENT_DOCUMENT_PATH

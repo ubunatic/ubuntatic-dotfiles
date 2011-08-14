@@ -1,0 +1,15 @@
+#!/bin/sh
+# [Gedit Tool]
+# Name=Hot Coffee
+# Shortcut=F5
+# Languages=coffee
+# Applicability=all
+# Output=output-panel
+# Input=nothing
+# Save-files=nothing
+
+
+updir=$(sh $HOME/.gnome2/gedit/tools/lib/upstream-find-src-and-lib.sh)
+cd $updir
+
+node build.js

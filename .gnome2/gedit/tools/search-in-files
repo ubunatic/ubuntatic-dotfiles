@@ -1,0 +1,46 @@
+#!/bin/sh
+# [Gedit Tool]
+# Name=Search in Files
+# Shortcut=F3
+# Applicability=all
+# Output=output-panel
+# Input=selection
+# Save-files=nothing
+
+args=`xargs`
+updir=`sh $HOME/dev/bin/upstream-find-src-and-lib.sh`
+regex_replace='s/^.*\(\.[a-Z0-9]*\)$/\1/g'
+ext=`echo $GEDIT_CURRENT_DOCUMENT_NAME | sed -e $regex_replace`
+word=$GEDIT_CURRENT_WORD
+
+files=$(find $updir -name \*$ext -print);
+
+cd $updir
+#TODO: find out to format shell output for gedit
+bold=`tput -Txterm smso` #bold
+normal=`tput -Txterm rmso` #sgr0
+
+echo "---------------------------------------"
+echo "Searching for '$args' in '$updir/*$ext'"
+for file in $files; do
+	grep -Hni $args $file |\
+	sed -e 's/#.*$//g'|\
+	sed -e 's/^.*\/\(.*:[0-9]*:\)/\1 /g'
+done
+
+if [ $args != $word ]; then
+	echo "---------------------------------------"
+	echo "Searching for '$word' in '$updir/*$ext'"
+	for file in $files; do
+		grep -Hni $word $file |\
+		sed -e 's/#.*$//g'|\
+		sed -e 's/^.*\/\(.*:[0-9]*:\)/\1 /g'
+	done
+fi
+
+exit 0;
+
+#GEDIT_CURRENT_DOCUMENT_NAME
+#GEDIT_CURRENT_DOCUMENT_DIR
+#GEDIT_CURRENT_LINE
+#GEDIT_CURRENT_LINE_NUMBER

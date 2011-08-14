@@ -1,0 +1,14 @@
+#!/bin/sh
+# [Gedit Tool]
+# Name=JSLint
+# Shortcut=<Control>j
+# Applicability=all
+# Output=output-panel
+# Input=selection-document
+# Save-files=nothing
+
+echo "/*jslint onevar: true, undef: true, newcap: true, nomen: true, regexp: true, plusplus: true, bitwise: true, browser: true, maxerr: 50, indent: 4, white: false */" > /tmp/jslint-me.js
+cat $1 >> /tmp/jslint-me.js
+result=$(js $HOME/.gnome2/gedit/plugins/jslint-rhino.js /tmp/jslint-me.js)
+rm /tmp/jslint-me.js
+js $HOME/.gnome2/gedit/plugins/jslint-rhino-text-replace.js "$GEDIT_CURRENT_DOCUMENT_NAME" $result > /dev/stdout
