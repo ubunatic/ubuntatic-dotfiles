@@ -7,11 +7,24 @@
 " This must be first, because it changes other options as a side effect.
 set nocompatible
 
+" save file dialog mapped to <Ctrl-[Alt]-s>
+nmap <C-A-s> :browse saveas<CR>
+imap <C-A-s> <Esc> :browse saveas<CR>
+nnoremap <C-s> :w<CR> 
+imap <C-s> <Esc> :w<CR> 
+
+" open file dialog mapped to <Esc>o and <A-o>
 let g:browsefilter="All files\t*.*\n"
 nmap <Esc>o :browse tabe<CR>
+nmap <A-o> <Esc>o
+imap <A-o> <Esc><Esc>o
 
 function! FindCoffeeProject(...)
   if a:0 == 0
+    " setlocal errorformat=%AError:\ %m\\,\ starting\ on\ line\ %l
+    " setlocal efm=%C%.%#,%AError:\ %m\\,\ starting\ on\ line\ %l%.%#,%Z
+    setlocal efm=Error:\ in\ %f\\,\ %m
+	
 	return call("FindCoffeeProject", [expand("%:p:h")] )
   elseif a:0 == 1
 	if isdirectory(expand(a:1))
@@ -41,10 +54,12 @@ function! CompileCoffeeProject(...)
   let l:pdir = call("FindCoffeeProject", [])
   if isdirectory(l:pdir."/src")
 	if filereadable(l:pdir."/build.js")
-	  echo "Compiling coffee files"
-	  let l:result = system("cd ".l:pdir."; node build.js")
-	  echo l:result
-	  return 1
+	  " echo "Compiling coffee files"
+	  " let l:result = system("cd ".l:pdir."; node build.js 2>&1")
+	  let l:fake = system("echo 'Error: in test_match.co, fault, line 5' 1>&2")
+	  " echo l:fake
+	  " put! = l:result
+	  return l:fake
 	else
 	  echo "Compile error! Buildfile not found. Please create $PROJECT/build.js."
 	endif
@@ -59,6 +74,8 @@ command! -nargs=* CompileCoffeeProject :call CompileCoffeeProject(<f-args>)
 filetype off
 call pathogen#runtime_append_all_bundles()
 filetype on
+
+set keywordprg=:help
 
 " allow backspacing over everything in insert mode
 set backspace=indent,eol,start
@@ -79,17 +96,22 @@ elseif has("win32") || has("win64")
 endif
 
 " basics
-set history=50      " keep 50 lines of command line history
-set ruler           " show the cursor position all the time
-set showcmd         " display incomplete commands
-set incsearch       " do incremental searching
-set hlsearch        " highlight search results
-set ignorecase      " ignore case
-set tabstop=4       " change tab from 8 to 4
-set softtabstop=2   " allow fine grained soft tabs while keeping real tabs stable
-set foldcolumn=1    " always show left code folding column
+set history=50        " keep 50 lines of command line history
+set ruler             " show the cursor position all the time
+set showcmd           " display incomplete commands
+set showmatch         " display bracket matches
+set incsearch         " do incremental searching
+set hlsearch          " highlight search results
+set ignorecase        " ignore case
+set tabstop=4         " change tab from 8 to 4
+set softtabstop=4     " allow fine grained soft tabs while keeping real tabs stable
+set foldcolumn=1      " always show left code folding column
 set foldmethod=indent " use space to fold/unfold code; use syntax or indent
-" set shiftwidth=4    " set default shiftwidth
+set novisualbell      " disable blinking terminals
+set noerrorbells      " disable any beeps
+set shiftwidth=4      " set default shift width
+set nowrap            " do not wrap text
+set linebreak         " smart brake if wrap is enabled
 
 
 " key mappings:    F5: write, compile, check errors (normal AND insert mode)
@@ -168,14 +190,14 @@ map <A-up> <ESC>:bp<CR>
 
 " Add fontsizes to F8-F12
 if has("unix")
-  map <F8>  <ESC>:set guifont=Monospace\ 8<CR>
-  map <F9>  <ESC>:set guifont=Monospace\ 10<CR>
+  map  <F8> <ESC>:set guifont=Monospace\ 8<CR>
+  map  <F9> <ESC>:set guifont=Monospace\ 10<CR>
   map <F10> <ESC>:set guifont=Monospace\ 12<CR>
   map <F11> <ESC>:set guifont=Monospace\ 16<CR>
   map <F12> <ESC>:set guifont=Monospace\ 20<CR>
 elseif has("win32") || has("win64")
-  map <F8>  <ESC>:set guifont=Lucida_Console:h8:cANSI<CR>
-  map <F9>  <ESC>:set guifont=Lucida_Console:h10:cANSI<CR>
+  map  <F8> <ESC>:set guifont=Lucida_Console:h8:cANSI<CR>
+  map  <F9> <ESC>:set guifont=Lucida_Console:h10:cANSI<CR>
   map <F10> <ESC>:set guifont=Lucida_Console:h12:cANSI<CR>
   map <F11> <ESC>:set guifont=Lucida_Console:h16:cANSI<CR>
   map <F12> <ESC>:set guifont=Lucida_Console:h20:cANSI<CR>
@@ -183,8 +205,8 @@ endif
 
 " Don't use Ex mode, use Q for formatting
 map Q gq
-nmap <space> za
-nmap <C-space> zi
+nnoremap <space> za
+nnoremap <C-space> zi
 map <C-Tab> gt<CR>
 map <C-S-Tab> gT<CR>
 map <A-j> :bn<CR>
@@ -227,17 +249,16 @@ if &t_Co > 2 || has("gui_running")
   syntax on
   set hlsearch
   " Use filetype to add new types to highlighting patterns
-"Pmenu		normal item  |hl-Pmenu|
-"PmenuSel	selected item  |hl-PmenuSel|
-"PmenuSbar	scrollbar  |hl-PmenuSbar|
-"PmenuThumb	thumb of the scrollbar  |hl-PmenuThumb|
-
+  "Pmenu		normal item  |hl-Pmenu|
+  "PmenuSel	selected item  |hl-PmenuSel|
+  "PmenuSbar	scrollbar  |hl-PmenuSbar|
+  "PmenuThumb	thumb of the scrollbar  |hl-PmenuThumb|
 endif
 
 if has("gui_running")
   " GUI is running or is about to start.
   " Maximize gvim window.
-  set lines=100 columns=100
+  set lines=56 columns=100
 else
   " This is console Vim.
   if exists("+lines")
@@ -283,9 +304,9 @@ if has("autocmd")
   " au FileType coffee set makeprg=coffee\ -c\ %
   " auto compile coffee files silently but show errors add '| redraw!' for
   " au BufWritePost coffee silent CoffeeMake! -b | cwindow | redraw! 
-    au BufWritePost,FileWritePost *.co,*.coffee !cat <afile> | coffee -scb 2>&1 
+  " au BufWritePost,FileWritePost *.co,*.coffee !cat <afile> | coffee -scb 2>&1 
   " au BufWritePost,FileWritePost coffee :silent !coffee -c <afile> 
-	au BufWritePost,FileWritePost *.co,*.coffee CompileCoffeeProject
+    au BufWritePost,FileWritePost *.co,*.coffee CompileCoffeeProject | cwindow
   elseif has("win32") || has("win64")
 	au BufWritePost,FileWritePost *.co,*.coffee CompileCoffeeProject
   endif
