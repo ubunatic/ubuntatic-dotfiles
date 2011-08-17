@@ -1,72 +1,70 @@
-
+"
 "
 " Author:       Uwe Jugel <uwe.jugel@googlemail.com>
-" Last change:  2011 Aug 10
+" Last change:  2011 Aug 17
+"
 "
 
 " This must be first, because it changes other options as a side effect.
 set nocompatible
 
-" save file dialog mapped to <Ctrl-[Alt]-s>
-nmap <C-A-s> :browse saveas<CR>
-imap <C-A-s> <Esc> :browse saveas<CR>
-nnoremap <C-s> :w<CR> 
-imap <C-s> <Esc> :w<CR> 
 
-" open file dialog mapped to <Esc>o and <A-o>
-let g:browsefilter="All files\t*.*\n"
-nmap <Esc>o :browse tabe<CR>
-nmap <A-o> <Esc>o
-imap <A-o> <Esc><Esc>o
 
 function! FindCoffeeProject(...)
-  if a:0 == 0
-    " setlocal errorformat=%AError:\ %m\\,\ starting\ on\ line\ %l
-    " setlocal efm=%C%.%#,%AError:\ %m\\,\ starting\ on\ line\ %l%.%#,%Z
-    setlocal efm=Error:\ in\ %f\\,\ %m
-	
-	return call("FindCoffeeProject", [expand("%:p:h")] )
-  elseif a:0 == 1
-	if isdirectory(expand(a:1))
-	  return call("FindCoffeeProject", [1, expand(a:1)] )
-	elseif filereadable(expand(a:1))
-	  return call("FindCoffeeProject", [1, matchstr( expand(a:1), ".*/" )] )
+	if a:0 == 0                                 " inital call: call self on current file
+		return call("FindCoffeeProject", [expand("%:p:h")] )
+	elseif a:0 == 1                             " simple call: start recursion with argument 1
+		if isdirectory(expand(a:1))
+			return call("FindCoffeeProject", [1, expand(a:1)] )
+		elseif filereadable(expand(a:1))
+			return call("FindCoffeeProject", [1, matchstr( expand(a:1), ".*/" )] )
+		else
+			echo "Path not found: " a:1
+		endif
+	elseif a:0 == 2 && a:1 < &maxfuncdepth - 10 " stop recursion BEFORE maxdepth (100) is reached
+		let l:success = isdirectory(a:2."/src") " test if dir contians the 'src' dir
+		if l:success                            " return found dir or recurse once more
+			return a:2
+		else
+			return call("FindCoffeeProject", [ a:1 + 1, a:2."/.."] )
+		endif
 	else
-	  echo "Path not found: " a:1
+		echo "Could not locate project directory"
+		echo "see ~/.vimrc#FindProjectFile for details"
 	endif
-  elseif a:0 == 2 && a:1 < &maxfuncdepth - 10
-	let l:success = isdirectory(a:2."/src")
-	if l:success
-	  " echo "Found project dir: " a:2
-	  return a:2
-	else
-	  return call("FindCoffeeProject", [ a:1 + 1, a:2."/.."] )
-    endif
-  else
-	echo "Could not locate project directory"
-	echo "see ~/.vimrc#FindProjectFile for details"
-  endif
-  return
+	return
 endfunction
 command! -nargs=* FindCoffeeProject :call FindCoffeeProject(<f-args>)
 
 function! CompileCoffeeProject(...)
-  let l:pdir = call("FindCoffeeProject", [])
-  if isdirectory(l:pdir."/src")
-	if filereadable(l:pdir."/build.js")
-	  " echo "Compiling coffee files"
-	  " let l:result = system("cd ".l:pdir."; node build.js 2>&1")
-	  let l:fake = system("echo 'Error: in test_match.co, fault, line 5' 1>&2")
-	  " echo l:fake
-	  " put! = l:result
-	  return l:fake
+	let l:pdir  = call("FindCoffeeProject", []) " find the 'src' dir; your coffee project should contain one
+	let l:error = ''                            " empty error == success ;)
+	if isdirectory(l:pdir."/src")               " double check if the 'src' dir there
+		if filereadable(l:pdir."/build.js")     " check if build.js exisits
+			echo "Compiling coffee files"
+			" build the project and grep the first Error
+			" IMPROVE: support multiple error lines
+			let l:output    = system("cd ".l:pdir."; node build.js")   
+			let l:errortext = matchstr( l:output, "Error:[^\n]*" )
+			let l:result    = substitute( l:errortext,'Error:\(.*\),[^,]*line\s\(\d*\)', '|\2| \1','g')
+			if strlen(l:errortext) > 0
+				let l:error   = expand("%").": ".l:result
+			else
+				echo "Build successful"
+			endif 
+		else
+			let l:error = "Compile error! Buildfile not found. Please create $PROJECT/build.js."
+		endif
 	else
-	  echo "Compile error! Buildfile not found. Please create $PROJECT/build.js."
+		let l.error = "Compile error! Project dir not found. Please create $PROJECT/src."
 	endif
-  else
-	echo "Compile error! Project dir not found. Please create $PROJECT/src."
-  endif
-  return
+	if strlen(l:error) > 0      " check if error is empty. otherwise assume success
+		cexpr l:error           " pipe error into cwindow
+		caddexpr ''             " trigger opening of cwindow
+	else
+		cexpr ''                " clear cwindow
+	endif
+	cwindow                     " open cwindow (only opens if it has errors)
 endfunction
 command! -nargs=* CompileCoffeeProject :call CompileCoffeeProject(<f-args>)
 
@@ -81,18 +79,18 @@ set keywordprg=:help
 set backspace=indent,eol,start
 
 if has("vms")
-  set nobackup 		" do not keep a backup file, use versions instead
+	set nobackup 		" do not keep a backup file, use versions instead
 else
-  set backup 		" keep a backup file
+	set backup 		" keep a backup file
 endif
 
 " avoid messing up source folders with backup files
 if has("unix")
-  set backupdir=$HOME/.vim/backup  " store backups centrally
-  set directory=$HOME/.vim/tmp     " store swaps centrally
+	set backupdir=$HOME/.vim/backup  " store backups centrally
+	set directory=$HOME/.vim/tmp     " store swaps centrally
 elseif has("win32") || has("win64")
-  set backupdir=%VIM%/backup  " store backups centrally
-  set directory=%VIM%/tmp     " store swaps centrally
+	set backupdir=%VIM%/backup  " store backups centrally
+	set directory=%VIM%/tmp     " store swaps centrally
 endif
 
 " basics
@@ -103,15 +101,19 @@ set showmatch         " display bracket matches
 set incsearch         " do incremental searching
 set hlsearch          " highlight search results
 set ignorecase        " ignore case
-set tabstop=4         " change tab from 8 to 4
-set softtabstop=4     " allow fine grained soft tabs while keeping real tabs stable
-set foldcolumn=1      " always show left code folding column
-set foldmethod=indent " use space to fold/unfold code; use syntax or indent
+" set tabstop=4         " change tab from 8 to 4
+" set softtabstop=4     " allow fine grained soft tabs while keeping real tabs stable
+set foldcolumn=4      " always show left code folding column
+set foldmethod=syntax " use space to fold/unfold code; use syntax or indent
 set novisualbell      " disable blinking terminals
 set noerrorbells      " disable any beeps
-set shiftwidth=4      " set default shift width
-set nowrap            " do not wrap text
-set linebreak         " smart brake if wrap is enabled
+" set shiftwidth=4      " set default shift width
+set wrap               " do not wrap text
+set linebreak         " smart brake if wrap is enabled 
+set wrapmargin=0      " # of chars from RIGHT border where auto wrapping starts
+set textwidth=0       " disable fixed text width
+set smartindent       " allow smart indenting
+set autoindent        " allow auto indenting (supported by smart indenting)
 
 
 " key mappings:    F5: write, compile, check errors (normal AND insert mode)
@@ -119,7 +121,8 @@ set linebreak         " smart brake if wrap is enabled
 " ESC mappings:    <ESC>l toggle control characters, <ESC>n toggle line numbers,
 "                  <ESC><SPACE> unhighlight search results
 "
-nmap <F5> :w<CR>:make<CR>:cw<CR>
+nmap <F5> :CoffeeRun<CR>
+" :w<CR>:make<CR>:cw<CR>
 imap <F5> <ESC><F5>
 nmap <F6> :set spell!<CR>
 nmap <F7> :set wrap!<CR>
@@ -127,6 +130,24 @@ nmap <ESC>l :set list!<CR>
 nmap <ESC>n :set number!<CR>
 nmap <ESC><SPACE> :nohl<CR>
 
+" save file dialog mapped to <Ctrl-[Alt]-s>
+nnoremap <C-A-s> :browse saveas<CR>
+inoremap <C-A-s> <Esc>:browse saveas<CR>
+nnoremap <C-s> :w<CR> 
+inoremap <C-s> <Esc>:w<CR> 
+
+" try to open file under cursor in new tab
+nnoremap <F3> :sp %:p:h/<cfile><CR>
+nnoremap <Esc>e :tabe %:p:h/<cfile><CR>
+
+" allow pure Ctrl-w closing of windows
+nnoremap <C-w><C-w> <C-w>q
+
+" open file dialog mapped to <Esc>o and <A-o>
+let g:browsefilter="All files\t*.*\n"
+nmap <Esc>o :browse tabe<CR>
+nmap <A-o> <Esc>o
+imap <A-o> <Esc><Esc>o
 " remap arrows to hjkl
 noremap <left> h
 noremap <right> l
@@ -190,17 +211,17 @@ map <A-up> <ESC>:bp<CR>
 
 " Add fontsizes to F8-F12
 if has("unix")
-  map  <F8> <ESC>:set guifont=Monospace\ 8<CR>
-  map  <F9> <ESC>:set guifont=Monospace\ 10<CR>
-  map <F10> <ESC>:set guifont=Monospace\ 12<CR>
-  map <F11> <ESC>:set guifont=Monospace\ 16<CR>
-  map <F12> <ESC>:set guifont=Monospace\ 20<CR>
+	map  <F8> <ESC>:set guifont=Monospace\ 8<CR>
+	map  <F9> <ESC>:set guifont=Monospace\ 10<CR>
+	map <F10> <ESC>:set guifont=Monospace\ 12<CR>
+	map <F11> <ESC>:set guifont=Monospace\ 16<CR>
+	map <F12> <ESC>:set guifont=Monospace\ 20<CR>
 elseif has("win32") || has("win64")
-  map  <F8> <ESC>:set guifont=Lucida_Console:h8:cANSI<CR>
-  map  <F9> <ESC>:set guifont=Lucida_Console:h10:cANSI<CR>
-  map <F10> <ESC>:set guifont=Lucida_Console:h12:cANSI<CR>
-  map <F11> <ESC>:set guifont=Lucida_Console:h16:cANSI<CR>
-  map <F12> <ESC>:set guifont=Lucida_Console:h20:cANSI<CR>
+	map  <F8> <ESC>:set guifont=Lucida_Console:h8:cANSI<CR>
+	map  <F9> <ESC>:set guifont=Lucida_Console:h10:cANSI<CR>
+	map <F10> <ESC>:set guifont=Lucida_Console:h12:cANSI<CR>
+	map <F11> <ESC>:set guifont=Lucida_Console:h16:cANSI<CR>
+	map <F12> <ESC>:set guifont=Lucida_Console:h20:cANSI<CR>
 endif
 
 " Don't use Ex mode, use Q for formatting
@@ -240,105 +261,108 @@ vnoremap <S-CR> <ESC>
 
 " In many terminal emulators the mouse works just fine, thus enable it.
 if has('mouse')
-  set mouse=a
+	set mouse=a
 endif
 
 " Switch syntax highlighting on, when the terminal has colors
 " Also switch on highlighting the last used search pattern.
 if &t_Co > 2 || has("gui_running")
-  syntax on
-  set hlsearch
-  " Use filetype to add new types to highlighting patterns
-  "Pmenu		normal item  |hl-Pmenu|
-  "PmenuSel	selected item  |hl-PmenuSel|
-  "PmenuSbar	scrollbar  |hl-PmenuSbar|
-  "PmenuThumb	thumb of the scrollbar  |hl-PmenuThumb|
+	syntax on
+	set hlsearch
+	" Use filetype to add new types to highlighting patterns
+	"Pmenu		normal item  |hl-Pmenu|
+	"PmenuSel	selected item  |hl-PmenuSel|
+	"PmenuSbar	scrollbar  |hl-PmenuSbar|
+	"PmenuThumb	thumb of the scrollbar  |hl-PmenuThumb|
 endif
 
 if has("gui_running")
-  " GUI is running or is about to start.
-  " Maximize gvim window.
-  set lines=56 columns=100
+	" GUI is running or is about to start.
+	" Maximize gvim window.
+	set lines=56 columns=120
 else
-  " This is console Vim.
-  if exists("+lines")
-    set lines=50
-  endif
-  if exists("+columns")
-    set columns=100
-  endif
+	" This is console Vim.
+	if exists("+lines")
+		set lines=56
+	endif
+	if exists("+columns")
+		set columns=120
+	endif
 endif
 
 " Only do this part when compiled with support for autocommands.
 if has("autocmd")
 
-  " Enable file type detection.
-  " Use the default filetype settings, so that mail gets 'tw' set to 72,
-  " 'cindent' is on in C files, etc.
-  " Also load indent files, to automatically do language-dependent indenting.  
-  
+	" Enable file type detection.
+	" Use the default filetype settings, so that mail gets 'tw' set to 72,
+	" 'cindent' is on in C files, etc.
+	" Also load indent files, to automatically do language-dependent indenting.  
 
-  filetype plugin indent on
 
-  " Put these in an autocmd group, so that we can delete them easily.
-  aug vimrcEx
-  au!
+	filetype plugin indent on
 
-  " add coffee files to autocomplete
-  au BufNewFile,BufRead *.co set filetype=coffee
+	" Put these in an autocmd group, so that we can delete them easily.
+	aug vimrcEx
+		au!
 
-  " For all text files set 'textwidth' to 78 characters.
-  au FileType text setlocal textwidth=78
+		" add coffee files to autocomplete
+		au BufNewFile,BufRead *.co set filetype=coffee
 
-  " When editing a file, always jump to the last known cursor position.
-  " Don't do it when the position is invalid or when inside an event handler
-  " (happens when dropping a file on gvim).
-  " Also don't do it when the mark is in the first line, that is the default
-  " position when opening a file.
-  au BufReadPost *
-    \ if line("'\"") > 1 && line("'\"") <= line("$") |
-    \   exe "normal! g`\"" |
-    \ endif
+		" For all text files set 'textwidth' to 78 characters.
+		au FileType text setlocal textwidth=78
 
-  if has("unix")
-  " au FileType coffee set makeprg=coffee\ -c\ %
-  " auto compile coffee files silently but show errors add '| redraw!' for
-  " au BufWritePost coffee silent CoffeeMake! -b | cwindow | redraw! 
-  " au BufWritePost,FileWritePost *.co,*.coffee !cat <afile> | coffee -scb 2>&1 
-  " au BufWritePost,FileWritePost coffee :silent !coffee -c <afile> 
-    au BufWritePost,FileWritePost *.co,*.coffee CompileCoffeeProject | cwindow
-  elseif has("win32") || has("win64")
-	au BufWritePost,FileWritePost *.co,*.coffee CompileCoffeeProject
-  endif
+		" When editing a file, always jump to the last known cursor position.
+		" Don't do it when the position is invalid or when inside an event handler
+		" (happens when dropping a file on gvim).
+		" Also don't do it when the mark is in the first line, that is the default
+		" position when opening a file.
+		au BufReadPost *
+					\ if line("'\"") > 1 && line("'\"") <= line("$") |
+					\   exe "normal! g`\"" |
+					\ endif
 
-  " autoload vimrc if it has been changed
-  au BufWritePost *.vimrc,_vimrc so %
+		if has("unix")
+			" au FileType coffee set makeprg=coffee\ -c\ %
+			" auto compile coffee files silently but show errors add '| redraw!' for
+			" au BufWritePost *.co,*.coffee silent CoffeeMake! -b | cwindow
+			" au BufWritePost *.co,*.coffee silent CoffeeCompile | cwindow 
+			" au BufWritePost,FileWritePost *.co,*.coffee !cat <afile> | coffee -scb 2>&1 
+			" au BufWritePost,FileWritePost coffee :silent !coffee -c <afile>
+			au BufNewFile,BufReadPost *.co,*.coffee setl foldmethod=indent nofoldenable
+			au BufWritePost,FileWritePost *.co,*.coffee CompileCoffeeProject 
+			" au BufWritePost,FileWritePost *.mycode CompileMyCode 
+		elseif has("win32") || has("win64")
+			"	au BufWritePost,FileWritePost *.co,*.coffee CompileCoffeeProject
+		endif
 
-  aug END
+		" autoload vimrc if it has been changed
+		au BufWritePost *.vimrc,_vimrc so %
 
-  " color magic
-  set background=dark
-  colorscheme desert
-  highlight Pmenu guifg='Black' guibg='White'
-  highlight PmenuSel guifg='Black' guibg='Gray'
+	aug END
+
+	" color magic
+	set background=dark
+	colorscheme desert
+	highlight Pmenu guifg='Black' guibg='White'
+	highlight PmenuSel guifg='Black' guibg='Gray'
 
 else
-  set autoindent		" always set autoindenting on
+	set autoindent		" always set autoindenting on
 endif " has("autocmd")
 
 " Convenient command to see the difference between the current buffer and the
 " file it was loaded from, thus the changes you made.
 " Only define it when not defined already.
 if !exists(":DiffOrig")
-  command DiffOrig vert new | set bt=nofile | r # | 0d_ | diffthis
-		  \ | wincmd p | diffthis
+	command DiffOrig vert new | set bt=nofile | r # | 0d_ | diffthis
+				\ | wincmd p | diffthis
 endif
 
 " switch to the users Home dir instead of the systems root
 " or switch to my windows project dir
 if has("win32") || has("win64")
-  cd E:\projects
+	cd E:\projects
 else
-  cd $HOME
+	cd $HOME
 endif
 
