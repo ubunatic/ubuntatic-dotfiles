@@ -39,6 +39,7 @@ command! -nargs=* FindCoffeeProject :call FindCoffeeProject(<f-args>)
 function! CompileCoffeeProject(...)
 	let l:pdir  = call("FindCoffeeProject", []) " find the 'src' dir; your coffee project should contain one
 	let l:error = ''                            " empty error == success ;)
+	cgetexpr ''                                 " clear cwindow
 	if isdirectory(l:pdir."/src")               " double check if the 'src' dir there
 		if filereadable(l:pdir."/build.js")     " check if build.js exisits
 			echo "Compiling coffee files"
@@ -46,9 +47,9 @@ function! CompileCoffeeProject(...)
 			" IMPROVE: support multiple error lines
 			let l:output    = system("cd ".l:pdir."; node build.js")   
 			let l:errortext = matchstr( l:output, "Error:[^\n]*" )
-			let l:result    = substitute( l:errortext,'Error:\(.*\),[^,]*line\s\(\d*\)', '|\2| \1','g')
+			let l:result    = substitute( l:errortext,'Error:\(.*\),[^,]*line\s\(\d*\)', '\2| \1','g')
 			if strlen(l:errortext) > 0
-				let l:error   = expand("%").": ".l:result
+				let l:error   = expand("%")."|".l:result
 			else
 				echo "Build successful"
 			endif 
@@ -61,8 +62,6 @@ function! CompileCoffeeProject(...)
 	if strlen(l:error) > 0      " check if error is empty. otherwise assume success
 		cexpr l:error           " pipe error into cwindow
 		caddexpr ''             " trigger opening of cwindow
-	else
-		cexpr ''                " clear cwindow
 	endif
 	cwindow                     " open cwindow (only opens if it has errors)
 endfunction
@@ -101,13 +100,13 @@ set showmatch         " display bracket matches
 set incsearch         " do incremental searching
 set hlsearch          " highlight search results
 set ignorecase        " ignore case
-" set tabstop=4         " change tab from 8 to 4
-" set softtabstop=4     " allow fine grained soft tabs while keeping real tabs stable
+set tabstop=4         " change tab from 8 to 4
+set softtabstop=4     " allow fine grained soft tabs while keeping real tabs stable
+set shiftwidth=4      " set default shift width used for cindent, >>, and <<
 set foldcolumn=4      " always show left code folding column
 set foldmethod=syntax " use space to fold/unfold code; use syntax or indent
 set novisualbell      " disable blinking terminals
 set noerrorbells      " disable any beeps
-" set shiftwidth=4      " set default shift width
 set wrap               " do not wrap text
 set linebreak         " smart brake if wrap is enabled 
 set wrapmargin=0      " # of chars from RIGHT border where auto wrapping starts
@@ -148,6 +147,12 @@ let g:browsefilter="All files\t*.*\n"
 nmap <Esc>o :browse tabe<CR>
 nmap <A-o> <Esc>o
 imap <A-o> <Esc><Esc>o
+
+" work on whole words. changes the whole word and not only its tails
+" used for example with d, y, c, v, etc.
+onoremap w iw
+vnoremap w iw
+
 " remap arrows to hjkl
 noremap <left> h
 noremap <right> l
@@ -329,7 +334,7 @@ if has("autocmd")
 			" au BufWritePost,FileWritePost *.co,*.coffee !cat <afile> | coffee -scb 2>&1 
 			" au BufWritePost,FileWritePost coffee :silent !coffee -c <afile>
 			au BufNewFile,BufReadPost *.co,*.coffee setl foldmethod=indent nofoldenable
-			au BufWritePost,FileWritePost *.co,*.coffee CompileCoffeeProject 
+			au BufWritePost,FileWritePost *.co,*.coffee CompileCoffeeProject | cwindow
 			" au BufWritePost,FileWritePost *.mycode CompileMyCode 
 		elseif has("win32") || has("win64")
 			"	au BufWritePost,FileWritePost *.co,*.coffee CompileCoffeeProject
@@ -345,6 +350,7 @@ if has("autocmd")
 	colorscheme desert
 	highlight Pmenu guifg='Black' guibg='White'
 	highlight PmenuSel guifg='Black' guibg='Gray'
+	highlight Search guibg='Purple' guifg='NONE'
 
 else
 	set autoindent		" always set autoindenting on
