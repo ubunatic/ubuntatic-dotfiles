@@ -43,15 +43,16 @@ function! CompileCoffeeProject(...)
 	if isdirectory(l:pdir."/src")               " double check if the 'src' dir there
 		if filereadable(l:pdir."/build.js")     " check if build.js exisits
 			echo "Compiling coffee files"
-			" build the project and grep the first Error
-			" IMPROVE: support multiple error lines
+			" build the project and get errors 
 			let l:output    = system("cd ".l:pdir."; node build.js")   
-			let l:errortext = matchstr( l:output, "Error:[^\n]*" )
-			let l:result    = substitute( l:errortext,'Error:\(.*\),[^,]*line\s\(\d*\)', '\2| \1','g')
-			if strlen(l:errortext) > 0
-				let l:error   = expand("%")."|".l:result
-			else
-				echo "Build successful"
+			let l:result = ""
+			for item in split(l:output, '\n')
+				if match( item, '^Error:\sIn' ) >= 0
+					let l:result .= l:pdir.'/'.substitute( item,'Error:\sIn\s\(.*\),\(.*\),.*line\s\(\d*\)', '\1|\3| \2','g')."\n"
+				endif
+			endfor
+			if strlen(l:result) > 0
+				let l:error = l:result
 			endif 
 		else
 			let l:error = "Compile error! Buildfile not found. Please create $PROJECT/build.js."
@@ -61,9 +62,11 @@ function! CompileCoffeeProject(...)
 	endif
 	if strlen(l:error) > 0      " check if error is empty. otherwise assume success
 		cexpr l:error           " pipe error into cwindow
-		caddexpr ''             " trigger opening of cwindow
+		copen                 " open cwindow (only opens if it has errors)
+	else
+		cclose
+		echo "Build successful"
 	endif
-	cwindow                     " open cwindow (only opens if it has errors)
 endfunction
 command! -nargs=* CompileCoffeeProject :call CompileCoffeeProject(<f-args>)
 
@@ -284,14 +287,14 @@ endif
 if has("gui_running")
 	" GUI is running or is about to start.
 	" Maximize gvim window.
-	set lines=56 columns=120
+	set lines=56 columns=137
 else
 	" This is console Vim.
 	if exists("+lines")
 		set lines=56
 	endif
 	if exists("+columns")
-		set columns=120
+		set columns=137
 	endif
 endif
 
