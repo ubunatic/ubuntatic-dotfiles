@@ -1,0 +1,113 @@
+#% Do not delete the line below; configure depends on this
+#  \DeclareLaTeXClass[sig-alternate]{article (ACM SIG Proceedings MINIMAL)}
+# Input general definitions
+# don't use the following styles
+Format 11
+Input stdclass.inc
+
+SecNumDepth             3
+TocDepth                3
+
+NoStyle			Author
+NoStyle			Part
+NoStyle			Part*
+NoStyle			Chapter
+NoStyle			Chapter*
+NoStyle			Subparagraph
+NoStyle			Subparagraph*
+
+Style Conference
+	Margin			Dynamic
+	LatexType		Command
+	LatexName		conferenceinfo
+	Category		FrontMatter
+	InTitle			1
+	ParSkip			0.4
+	BottomSep		0.5
+	Align			Left
+	LabelSep		xx
+	LabelType		Static
+	LabelString		"Conference(2):"
+	LabelFont
+	  Size 			Smaller
+	  Color			Green
+	  Series		Bold
+	EndFont
+End
+
+Style Authorcount
+	CopyStyle		Conference
+	LatexName		numberofauthors
+	LabelString		"Number of Authors(1):"
+End
+
+
+Input stdtitle.inc
+
+Style Title
+	CopyStyle		Title
+	AlignPossible		Block
+End
+
+Style Subtitle
+	CopyStyle		Title
+	LatexName		subtitle
+	Font
+	  Size			Larger
+	EndFont
+End
+
+Style Terms
+	CopyStyle		Conference
+	LatexName		terms
+	LabelString		"Terms(1):"
+	TopSep                0.7
+End
+
+Style Keywords
+	CopyStyle		Conference
+	LatexName		keywords
+	LabelString		"Keywords(1):"
+	TopSep                0.7
+End
+
+Style Categories
+	CopyStyle		Conference
+	LatexType 		Paragraph
+	LatexName 		dummy
+	LabelString 	"Categories[TeX]:"
+End
+
+Style Authors
+	CopyStyle		Conference
+	LatexName		author
+	LabelString 	"Authors[TeX]:"
+End
+
+Style Abstract
+	CopyStyle 		Standard
+	Margin			Static
+	ParIndent 		""
+	LabelIndent 	""
+	TopSep                0.7
+	BottomSep             0.7
+	ParSep                0.3
+	LatexType		Environment
+	LatexName		abstract
+	Category		FrontMatter
+	NextNoIndent	1
+	Align 			Block
+	AlignPossible 	Block, Left
+	LabelType		Top_Environment
+	LabelString		"Abstract"
+	LabelBottomSep 	0.5
+	LabelFont
+	  Series		Bold
+	  Size			Larger
+	  Shape 		SmallCaps
+	EndFont
+End
+
+
+
+
