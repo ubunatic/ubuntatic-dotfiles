@@ -88,8 +88,8 @@ if has("unix")
 	set backupdir=$HOME/.vim/backup  " store backups centrally
 	set directory=$HOME/.vim/tmp     " store swaps centrally
 elseif has("win32") || has("win64")
-	set backupdir=%VIM%/backup  " store backups centrally
-	set directory=%VIM%/tmp     " store swaps centrally
+	set backupdir=$VIM/backup  " store backups centrally
+	set directory=$VIM/tmp     " store swaps centrally
 endif
 
 " basics
