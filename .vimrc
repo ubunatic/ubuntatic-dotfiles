@@ -22,7 +22,7 @@ function! FindCoffeeProject(...)
 			echo "Path not found: " a:1
 		endif
 	elseif a:0 == 2 && a:1 < &maxfuncdepth - 10 " stop recursion BEFORE maxdepth (100) is reached
-		let l:success = isdirectory(a:2."/src") " test if dir contians the 'src' dir
+		let l:success = isdirectory(a:2."/.hotcoffee") " test if dir contians the 'src' dir
 		if l:success                            " return found dir or recurse once more
 			return a:2
 		else
@@ -49,6 +49,8 @@ function! CompileCoffeeProject(...)
 			for item in split(l:output, '\n')
 				if match( item, '^Error:\sIn' ) >= 0
 					let l:result .= l:pdir.'/'.substitute( item,'Error:\sIn\s\(.*\),\(.*\),.*line\s\(\d*\)', '\1|\3| \2','g')."\n"
+				elseif match( item, '^[a-zA-Z]*Error:' ) >= 0
+					let l:result .= item."\n"   " also grep other errors. TODO: support more error types
 				endif
 			endfor
 			if strlen(l:result) > 0
