@@ -8,8 +8,6 @@
 " This must be first, because it changes other options as a side effect.
 set nocompatible
 
-
-
 function! FindCoffeeProject(...)
 	if a:0 == 0                                 " inital call: call self on current file
 		return call("FindCoffeeProject", [expand("%:p:h")] )
@@ -30,7 +28,7 @@ function! FindCoffeeProject(...)
 		endif
 	else
 		echo "Could not locate project directory"
-		echo "see ~/.vimrc#FindProjectFile for details"
+		echo "see ~/.vimrc#FindCoffeeProject for details"
 	endif
 	return
 endfunction
@@ -98,10 +96,11 @@ elseif has("win32") || has("win64")
 endif
 
 " basics
-set history=50        " keep 50 lines of command line history
+set history=1000      " keep 1000 lines of command line history
+set undolevels=1000   " keep 1000 undolevels
 set ruler             " show the cursor position all the time
 set showcmd           " display incomplete commands
-set showmatch         " display bracket matches
+set noshowmatch       " display bracket matches
 set incsearch         " do incremental searching
 set hlsearch          " highlight search results
 set ignorecase        " ignore case
@@ -112,13 +111,44 @@ set foldcolumn=4      " always show left code folding column
 set foldmethod=syntax " use space to fold/unfold code; use syntax or indent
 set novisualbell      " disable blinking terminals
 set noerrorbells      " disable any beeps
-set wrap               " do not wrap text
+set wrap              " do not wrap text
 set linebreak         " smart brake if wrap is enabled 
 set wrapmargin=0      " # of chars from RIGHT border where auto wrapping starts
 set textwidth=0       " disable fixed text width
 set smartindent       " allow smart indenting
 set autoindent        " allow auto indenting (supported by smart indenting)
+set scrolloff=7       " keep 7 lines visible from current line
+set whichwrap+=b,<,>,[,] " let backspace and arrow keys move to next/prev line in vis and normal mode
+set nolazyredraw      " Don't redraw while executing macros
 
+" With a map leader it's possible to do extra key combinations
+" like <leader>w saves the current file
+let mapleader=","
+let g:mapleader=","
+" Fast saving
+nmap <leader>w :w!<cr>
+
+" Fast editing of the .vimrc
+map <leader>e :e! ~/.vimrc<cr>
+
+"Useful when moving accross long lines
+map j gj
+map k gk
+
+" Tab configuration
+map <leader>tn :tabnew! %<cr>
+map <leader>te :tabedit
+map <leader>tc :tabclose<cr>
+map <leader>tm :tabmov
+
+" When pressing <leader>cd switch to the directory of the open buffer
+map <leader>cd :cd %:p:h<cr>e
+
+set pastetoggle=<F3>        " Press F3 for toggle paste mode
+nnoremap <leader>v "+gP     " Paste using ,v in normal mode
+
+" some settings comments copied from:  https://github.com/yodiaditya/vim-netbeans/blob/master/.vimrc 
+" TODO: copy more stuff later ;)
 
 " key mappings:    F5: write, compile, check errors (normal AND insert mode)
 " toggle mappings: F6: toggle spell checker, F7: toggle line wrap
@@ -133,6 +163,7 @@ nmap <F7> :set wrap!<CR>
 nmap <ESC>l :set list!<CR>
 nmap <ESC>n :set number!<CR>
 nmap <ESC><SPACE> :nohl<CR>
+nmap <leader><SPACE> :nohl<CR>
 
 " save file dialog mapped to <Ctrl-[Alt]-s>
 nnoremap <C-A-s> :browse saveas<CR>
@@ -141,7 +172,9 @@ nnoremap <C-s> :w<CR>
 inoremap <C-s> <Esc>:w<CR> 
 
 " try to open file under cursor in new tab
-nnoremap <F3> :sp %:p:h/<cfile><CR>
+" nnoremap <F3> :sp %:p:h/<cfile><CR>
+" <F3> used for  pastetoggle
+
 nnoremap <Esc>e :tabe %:p:h/<cfile><CR>
 
 " allow pure Ctrl-w closing of windows
@@ -161,8 +194,8 @@ vnoremap w iw
 " remap arrows to hjkl
 noremap <left> h
 noremap <right> l
-noremap <up> k
-noremap <down> j
+noremap <up> gk
+noremap <down> gj
 
 " remap Ctlr+arrows to word/sentence selection
 noremap <C-left> b
@@ -190,11 +223,11 @@ nmap <S-C-left> vb
 nmap <S-C-right> vw
 
 " start select and mark first line
-imap <S-up> <ESC>vk
-imap <S-down> <ESC>vj
+imap <S-up> <ESC>vgk
+imap <S-down> <ESC>vgj
 " use remap to prevent old mapping (page up/down)
-nnoremap <S-up> vk
-nnoremap <S-down> vj
+nnoremap <S-up> vgk
+nnoremap <S-down> vgj
 
 " start select and mark first block
 imap <S-C-up> <ESC>v(
@@ -207,8 +240,8 @@ vnoremap <S-left> h
 vnoremap <S-right> l
 vnoremap <S-C-left> b
 vnoremap <S-C-right> w
-vnoremap <S-up> k
-vnoremap <S-down> j
+vnoremap <S-up> gk
+vnoremap <S-down> gj
 vnoremap <S-C-up> (
 vnoremap <S-C-down> )
 vnoremap <C-up> (
