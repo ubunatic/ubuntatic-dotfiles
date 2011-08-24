@@ -40,13 +40,19 @@ function! CompileCoffeeProject(...)
 	cgetexpr ''                                 " clear cwindow
 	if isdirectory(l:pdir."/src")               " double check if the 'src' dir there
 		if filereadable(l:pdir."/build.js")     " check if build.js exisits
-			echo "Compiling coffee files"
-			" build the project and get errors 
-			let l:output    = system("cd ".l:pdir."; node build.js")   
+			" echo "Compiling coffee files"
+			" build the project and get errors
+			exec 'cd '.l:pdir
+			let l:output = system('node build.js')
+			" echo l:output
 			let l:result = ""
 			for item in split(l:output, '\n')
-				if match( item, '^Error:\sIn' ) >= 0
-					let l:result .= l:pdir.'/'.substitute( item,'Error:\sIn\s\(.*\),\(.*\),.*line\s\(\d*\)', '\1|\3| \2','g')."\n"
+				if match( item, '^Error: In' ) >= 0
+					let l:line = substitute( item, '.* line \(\d*\).*', '\1', 'g')
+					let l:file = substitute( item, '^Error: In \([^,]*\),.*', '\1', 'g' )
+					let l:text = substitute( item, '^Error: In .*line \d*[\s:]*\(.*\)$', '\1', 'g' )
+					let l:result .= l:pdir.'/'.l:file.'|'.l:line.'| '.l:text.'\n'
+					" let l:result .= l:pdir.'/'.substitute( item,'Error: In \(.*\),\(.*\),.*line \(\d*\)', '\1|\3| \2','g')."\n"
 				elseif match( item, '^[a-zA-Z]*Error:' ) >= 0
 					let l:result .= item."\n"   " also grep other errors. TODO: support more error types
 				endif
@@ -61,8 +67,8 @@ function! CompileCoffeeProject(...)
 		let l.error = "Compile error! Project dir not found. Please create $PROJECT/src."
 	endif
 	if strlen(l:error) > 0      " check if error is empty. otherwise assume success
-		cexpr l:error           " pipe error into cwindow
-		copen                 " open cwindow (only opens if it has errors)
+		cgetexpr l:error        " pipe error into cwindow
+		copen                   " open cwindow (usually only opens if it has errors)
 	else
 		cclose
 		echo "Build successful"
@@ -120,6 +126,7 @@ set autoindent        " allow auto indenting (supported by smart indenting)
 set scrolloff=7       " keep 7 lines visible from current line
 set whichwrap+=b,<,>,[,] " let backspace and arrow keys move to next/prev line in vis and normal mode
 set nolazyredraw      " Don't redraw while executing macros
+set encoding=utf-8    " force UTF-8 also for windows
 
 " With a map leader it's possible to do extra key combinations
 " like <leader>w saves the current file
@@ -129,7 +136,11 @@ let g:mapleader=","
 nmap <leader>w :w!<cr>
 
 " Fast editing of the .vimrc
-map <leader>e :e! ~/.vimrc<cr>
+if has("unix")
+	map <leader>e :e! $HOME/.vimrc<cr>
+elseif has("win32") || has("win64")
+	map <leader>e :e! $VIM/_vimrc<cr>
+endif
 
 "Useful when moving accross long lines
 map j gj
@@ -146,6 +157,27 @@ map <leader>cd :cd %:p:h<cr>e
 
 set pastetoggle=<F3>        " Press F3 for toggle paste mode
 nnoremap <leader>v "+gP     " Paste using ,v in normal mode
+
+" copied from $VIM/mswin.vim
+" backspace in Visual mode deletes selection
+vnoremap <BS> d
+
+" CTRL-X and SHIFT-Del are Cut
+vnoremap <C-X> "+x
+vnoremap <S-Del> "+x
+
+" CTRL-C and CTRL-Insert are Copy
+vnoremap <C-C> "+y
+vnoremap <C-Insert> "+y
+
+" CTRL-V and SHIFT-Insert are Paste
+map <C-V>		"+gP
+map <S-Insert>		"+gP
+
+cmap <C-V>		<C-R>+
+cmap <S-Insert>		<C-R>+
+
+
 
 " some settings comments copied from:  https://github.com/yodiaditya/vim-netbeans/blob/master/.vimrc 
 " TODO: copy more stuff later ;)
@@ -260,11 +292,12 @@ if has("unix")
 	map <F11> <ESC>:set guifont=Monospace\ 16<CR>
 	map <F12> <ESC>:set guifont=Monospace\ 20<CR>
 elseif has("win32") || has("win64")
-	map  <F8> <ESC>:set guifont=Lucida_Console:h8:cANSI<CR>
-	map  <F9> <ESC>:set guifont=Lucida_Console:h10:cANSI<CR>
-	map <F10> <ESC>:set guifont=Lucida_Console:h12:cANSI<CR>
-	map <F11> <ESC>:set guifont=Lucida_Console:h16:cANSI<CR>
-	map <F12> <ESC>:set guifont=Lucida_Console:h20:cANSI<CR>
+	map  <F8> <ESC>:set guifont=DejaVu_Sans_Mono:h8:cANSI<CR>
+	map  <F9> <ESC>:set guifont=DejaVu_Sans_Mono:h10:cANSI<CR>
+	map <F10> <ESC>:set guifont=DejaVu_Sans_Mono:h12:cANSI<CR>
+	map <F11> <ESC>:set guifont=DejaVu_Sans_Mono:h16:cANSI<CR>
+	map <F12> <ESC>:set guifont=DejaVu_Sans_Mono:h20:cANSI<CR>
+	set guifont=DejaVu_Sans_Mono:h10:cANSI
 endif
 
 " Don't use Ex mode, use Q for formatting
@@ -371,11 +404,12 @@ if has("autocmd")
 			" au BufWritePost *.co,*.coffee silent CoffeeCompile | cwindow 
 			" au BufWritePost,FileWritePost *.co,*.coffee !cat <afile> | coffee -scb 2>&1 
 			" au BufWritePost,FileWritePost coffee :silent !coffee -c <afile>
-			au BufNewFile,BufReadPost *.co,*.coffee setl foldmethod=indent nofoldenable
+			" au BufNewFile,BufReadPost *.co,*.coffee setl foldmethod=indent nofoldenable
 			au BufWritePost,FileWritePost *.co,*.coffee CompileCoffeeProject | cwindow
 			" au BufWritePost,FileWritePost *.mycode CompileMyCode 
 		elseif has("win32") || has("win64")
 			"	au BufWritePost,FileWritePost *.co,*.coffee CompileCoffeeProject
+			au BufWritePost,FileWritePost *.co,*.coffee CompileCoffeeProject 
 		endif
 
 		" autoload vimrc if it has been changed

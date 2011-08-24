@@ -4,7 +4,7 @@ source $VIMRUNTIME/vimrc_example.vim                 " load defaults
 " source $VIMRUNTIME/mswin.vim                         " load windows stuff
 source $DOTFILES/.vimrc                              " load my supder duper cross platform .vimrc
 
-behave mswin
+" behave mswin
 
 set diffexpr=MyDiff()
 function! MyDiff()
