@@ -127,6 +127,7 @@ set scrolloff=7       " keep 7 lines visible from current line
 set whichwrap+=b,<,>,[,] " let backspace and arrow keys move to next/prev line in vis and normal mode
 set nolazyredraw      " Don't redraw while executing macros
 set encoding=utf-8    " force UTF-8 also for windows
+set guioptions+=a     " enable autocopy using mouse or visual. Works independently of :y[ank]
 
 " With a map leader it's possible to do extra key combinations
 " like <leader>w saves the current file
@@ -158,6 +159,10 @@ map <leader>cd :cd %:p:h<cr>e
 set pastetoggle=<F3>        " Press F3 for toggle paste mode
 nnoremap <leader>v "+gP     " Paste using ,v in normal mode
 
+" map increase/decrease to new keys
+nnoremap <C-kPlus> <C-A>
+nnoremap <C-kMinus> <C-X>
+
 " copied from $VIM/mswin.vim
 " backspace in Visual mode deletes selection
 vnoremap <BS> d
@@ -171,13 +176,16 @@ vnoremap <C-C> "+y
 vnoremap <C-Insert> "+y
 
 " CTRL-V and SHIFT-Insert are Paste
-map <C-V>		"+gP
-map <S-Insert>		"+gP
+map <C-V> "+gP
+map <S-Insert> "+gP
 
-cmap <C-V>		<C-R>+
-cmap <S-Insert>		<C-R>+
+cmap <C-V> <C-R>+
+cmap <S-Insert> <C-R>+
 
-
+" CTRL-A selects all
+vnoremap <C-A> <ESC>ggvG
+nnoremap <C-A> ggvG
+inoremap <C-A> <ESC>ggvG
 
 " some settings comments copied from:  https://github.com/yodiaditya/vim-netbeans/blob/master/.vimrc 
 " TODO: copy more stuff later ;)
