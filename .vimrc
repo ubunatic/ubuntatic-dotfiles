@@ -474,7 +474,7 @@ if has("autocmd")
 
  	" color magic
 	set background=dark
-	colorscheme desert
+	colorscheme molokai
 	highlight Pmenu guifg='Black' guibg='White'
 	highlight PmenuSel guifg='Black' guibg='Gray'
 	highlight Search guibg='Purple' guifg='NONE'
