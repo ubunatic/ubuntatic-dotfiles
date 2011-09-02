@@ -155,6 +155,7 @@ set sidescrolloff=10  " keep 10 chars visible from current column
 set whichwrap+=b,<,>,[,] " let backspace and arrow keys move to next/prev line in vis and normal mode
 set nolazyredraw      " Don't redraw while executing macros
 set encoding=utf-8    " force UTF-8 also for windows
+set fileencoding=utf-8 " set encoding when writing files
 set guioptions+=a     " enable autocopy using mouse or visual. Works independently of :y[ank]
 set cpoptions+=$      " indicate change ranges with a $-sign
 set virtualedit=all   " allow moving in non-text areas
@@ -447,14 +448,14 @@ endif
 if has("gui_running")
 	" GUI is running or is about to start.
 	" Maximize gvim window.
-	set lines=61 columns=137
+	set lines=61 columns=138
 else
 	" This is console Vim.
 	if exists("+lines")
 		set lines=61
 	endif
 	if exists("+columns")
-		set columns=137
+		set columns=138
 	endif
 endif
 
