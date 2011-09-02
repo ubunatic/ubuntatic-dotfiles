@@ -495,8 +495,8 @@ if has("autocmd")
 	    au BufWrite,Syntax * syntax match localWhitespaceError /\s\+$/ display
 
 		" add coffee files to autocomplete
-		au BufNewFile,BufRead *.co set filetype=coffee
-		au BufNewFile,BufRead *.co,*.coffee :call HotCoffeeInit()
+		au BufNewFile,BufReadPost *.co,*.coffee set filetype=coffee
+		" au BufNewFile,BufReadPost *.co,*.coffee :call HotCoffeeInit()
 
 		" For all text files set 'textwidth' to 78 characters.
 		au FileType text setlocal textwidth=78
