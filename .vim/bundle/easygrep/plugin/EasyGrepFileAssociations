@@ -24,6 +24,7 @@ CUDA=*.cu *.cuh <C++>
 Cobol=*.cbl *.cob
 ColdFusion=*.cfm *.cfi *.cfc
 Configuration=.*rc *.conf *.cf *.cfg *.config *.ini
+CoffeeScript=*.co *.coffee
 D=*.d <C++>
 Diff=*.diff *.rej *.patch
 EDIF=*.edf *.edif *.edn *.edo
