@@ -51,12 +51,13 @@ function! HotCoffeeGoto(...)
 				let l:file = l:file.".coffee"
 			endif
 		endif                                    " open the found (or empty/new) file
-		exec ":e ".l:file                       
+		exec ":tab drop ".l:file
 	endif
 endfunction
 command! HotCoffeeGoto :call HotCoffeeGoto(expand("<cfile>"))
 
 function! HotCoffeeInit()
+	set filetype=coffee
 	noremap <buffer> gf :HotCoffeeGoto<CR>
 endfunction
 
@@ -170,6 +171,8 @@ set guioptions-=m     " remove menu bar
 set guioptions-=T     " remove toolbar
 set guioptions-=r     " remove right-hand scroll bar
 set autoindent        " always set autoindenting on
+set hidden            " allow buffer switches from unsaved files.
+set switchbuf=usetab  " respect open tabs when swtiching buffers
 
 " Plug options:
 let g:EasyGrepRecursive=1     "Enable recusrive search. Be careful when using Grep from $HOME, etc.
@@ -310,9 +313,6 @@ inoremap <C-s> <Esc>:w<CR>
 " <F3> used for  pastetoggle
 
 nnoremap <Esc>e :tabe %:p:h/<cfile><CR>
-
-" allow pure Ctrl-w closing of windows
-nnoremap <C-w><C-w> <C-w>q
 
 " open file dialog mapped to <Esc>o and <A-o>
 let g:browsefilter="All files\t*.*\n"
@@ -495,8 +495,8 @@ if has("autocmd")
 	    au BufWrite,Syntax * syntax match localWhitespaceError /\s\+$/ display
 
 		" add coffee files to autocomplete
-		au BufNewFile,BufReadPost *.co,*.coffee set filetype=coffee
-		" au BufNewFile,BufReadPost *.co,*.coffee :call HotCoffeeInit()
+		" au BufNewFile,BufReadPost *.co,*.coffee set filetype=coffee
+		au BufNewFile,BufReadPost *.co,*.coffee :call HotCoffeeInit()
 
 		" For all text files set 'textwidth' to 78 characters.
 		au FileType text setlocal textwidth=78
@@ -518,7 +518,7 @@ if has("autocmd")
 		" au BufWritePost,FileWritePost *.co,*.coffee !cat <afile> | coffee -scb 2>&1
 		" au BufWritePost,FileWritePost coffee :silent !coffee -c <afile>
 		" au BufNewFile,BufReadPost *.co,*.coffee setl foldmethod=indent nofoldenable
-		au BufWritePost,FileWritePost *.co,*.coffee HotCoffeeCompile
+		au BufWritePost,FileWritePost *.co,*.coffee silent HotCoffeeCompile
 
 		" autoload vimrc if it has been changed
 		au BufWritePost *.vimrc,_vimrc so %
