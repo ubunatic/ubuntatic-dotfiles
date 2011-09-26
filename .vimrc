@@ -18,9 +18,9 @@ function! HotCoffeeFindProject(...)
 		else
 			echo "Path not found: " a:1
 		endif
-	elseif a:0 == 2 && a:1 < &maxfuncdepth - 10 " stop recursion BEFORE maxdepth (100) is reached
+	elseif a:0 == 2 && a:1 < &maxfuncdepth - 1         " stop recursion BEFORE maxdepth (100) is reached
 		let l:success = isdirectory(a:2."/.hotcoffee") " test if dir contians the 'src' dir
-		if l:success                            " return found dir or recurse once more
+		if l:success                                   " return found dir or recurse once more
 			return a:2
 		else
 			return call("HotCoffeeFindProject", [ a:1 + 1, a:2."/.."] )
@@ -57,9 +57,70 @@ endfunction
 command! HotCoffeeGoto :call HotCoffeeGoto(expand("<cfile>"))
 
 function! HotCoffeeInit()
-	set filetype=coffee
+	setlocal filetype=coffee
 	noremap <buffer> gf :HotCoffeeGoto<CR>
+	let pdir = HotCoffeeFindProject()
+
+	exec 'lcd '.pdir
+	" append this for debugging: .' | cexpr "switching to '.pdir.'" | copen'
+
+	" does not work correctly when opening via gvim --remote-tab
+	" therefore, all HotCoffee scripts will make no assumptions on the pwd
+	" but search for the correct project path
+
+	" let g:EasyGrepMode=2
+	" EasyGrep is broken with *.co *.coffee, I could not figure out what was wrong
+	" using a custom grep based on vimgrep instead
 endfunction
+
+" search in pwd using vimgrep
+" searches only in files with same extension
+function! HotCoffeeGrep(...)
+	if a:0 <= 0
+		throw "HotCoffeeGrep: wrong usage, I need arguments"
+		return
+	else
+		let pattern = expand("<cword>")
+		if match( a:1, "class") != -1
+			" matches: any 'class <ClassName>' OR lines starting with <ClassName> = do
+			" the latter is used for 'static classes' containing consts, etc.
+			let pattern = '/^'.expand("<cword>").'\s*[=:]\s*do\|^\s*class\s*'.expand("<cword>").'\s*$/gj'
+		elseif match( a:1, "prop") != -1
+			" matches: '@<name> =' OR '@<name> :' OR '<name>:'
+			" the @<name> syntax is the default for properties
+			" the <name>: is used for properties in object notation
+			" TODO: add detection for a = { b: } inline assignments
+			let pattern = '/[@\.]'.expand("<cword>").'\s*[:=]\|^\s*'.expand("<cword>").'\s*:/'
+		elseif match( a:1, "ref" ) != -1
+			" similar to property match, but adds '{ <name> }' to detect destructuring assignment
+			let pattern = '/[@\.]'.expand("<cword>").'\|^\s*'.expand("<cword>").'\s*:\|{.*'.expand("<cword>").'.*}/'
+        endif
+		let pdir = HotCoffeeFindProject()
+		try
+			exec 'silent lvimgrep '.pattern.' '.pdir.'/**/*.'.expand("%:e").' | lopen'
+		catch /E480/
+			lexpr 'no match for "'.expand("<cword>").'", greptype: '.a:1
+			lopen
+		endtry
+	endif
+endfunction
+command! -nargs=1 HotCoffeeGrep :call HotCoffeeGrep(<f-args>)
+
+function! HotCoffeeComplete()
+	if !pumvisible()
+		" - start complete when '.' is pressed
+		" - get inital list
+	endif
+	" temporary map keys using loop
+	" (see https://bitbucket.org/ns9tks/vim-autocomplpop/)
+	" - attach TAB/UP/DOWN completion to cycle through list
+	" - close popup on ENTER/ESC
+	" - close current and trigger new popup on '.'
+
+	" - reduce intital list when typing [a-zA-Z_0-9@$]
+	" - updated list
+endfunction
+command! -nargs=0 HotCoffeeGrep :call HotCoffeeComplete() 
 
 function! HotCoffeeCompile(...)
 	let l:pdir  = call("HotCoffeeFindProject", []) " find the 'src' dir; your coffee project should contain one
@@ -69,7 +130,7 @@ function! HotCoffeeCompile(...)
 		if filereadable(l:pdir."/build.js")     " check if build.js exisits
 			" echo "Compiling coffee files"
 			" build the project and get errors
-			exec 'cd '.l:pdir
+			exec 'lcd '.l:pdir
 			let l:output = system('node build.js')
 			" echo l:output
 			let l:result = ""
@@ -175,7 +236,9 @@ set hidden            " allow buffer switches from unsaved files.
 set switchbuf=usetab  " respect open tabs when swtiching buffers
 
 " Plug options:
-let g:EasyGrepRecursive=1     "Enable recusrive search. Be careful when using Grep from $HOME, etc.
+" EasyGrep is broken with *.co *.coffee, disabled it for now
+" let g:EasyGrepRecursive=1     "Enable recusrive search. Be careful when using Grep from $HOME, etc.
+" let g:EasyGrepMode=2          "Set Grep to use only specific filetypes
 
 "-- Status Line ---- adopted from https://github.com/nocash/vim-rc.git --------------------------------
 "                +-> Relative file path
@@ -220,6 +283,14 @@ elseif has("win32") || has("win64")
 	map <leader>ev :e! $VIM/_vimrc<cr>
 endif
 
+" f/fw: find word, fc: find class, fp: find property, fu/fr: find usings/references
+nnoremap <leader>ff :HotCoffeeGrep word<CR>
+nnoremap <leader>fw :HotCoffeeGrep word<CR>
+nnoremap <leader>fc :HotCoffeeGrep class<CR>
+nnoremap <leader>fp :HotCoffeeGrep prop<CR>
+nnoremap <leader>fu :HotCoffeeGrep ref<CR>
+nnoremap <leader>fr :HotCoffeeGrep ref<CR>
+
 "Useful when moving accross long lines
 map j gj
 map k gk
@@ -233,7 +304,7 @@ map <leader>tm :tabmov
 " When pressing <leader>cd switch to the directory of the open buffer
 map <leader>cd :cd %:p:h<cr>e
 
-set pastetoggle=<F3>        " Press F3 for toggle paste mode
+set pastetoggle=<C-F3>        " Press F3 for toggle paste mode
 nnoremap <leader>v "+gP     " Paste using ,v in normal mode
 nnoremap <leader>p "+gP     " Paste using ,p in normal mode
 nnoremap <leader>c "+y      " Copy using ,c in normal mode
@@ -261,6 +332,7 @@ vnoremap <C-Insert> "+y
 
 map <S-Insert> "+gP
 
+" use C-V and Shift-Ins as paste
 cmap <C-V> <C-R>+
 cmap <S-Insert> <C-R>+
 
@@ -276,6 +348,7 @@ inoremap <C-^> ^
 
 " easy access to @
 map <A-q> @
+imap <A-q> @
 
 " Re-select visual area after indenting
 vnoremap > >gv
@@ -307,10 +380,6 @@ nnoremap <C-A-s> :browse saveas<CR>
 inoremap <C-A-s> <Esc>:browse saveas<CR>
 nnoremap <C-s> :w<CR>
 inoremap <C-s> <Esc>:w<CR>
-
-" try to open file under cursor in new tab
-" nnoremap <F3> :sp %:p:h/<cfile><CR>
-" <F3> used for  pastetoggle
 
 nnoremap <Esc>e :tabe %:p:h/<cfile><CR>
 
@@ -475,7 +544,7 @@ if has("autocmd")
 
  	" color magic
 	set background=dark
-	colorscheme molokai
+	colorscheme desert
 	highlight Pmenu guifg='Black' guibg='White'
 	highlight PmenuSel guifg='Black' guibg='Gray'
 	highlight Search guibg='Purple' guifg='NONE'
@@ -495,8 +564,12 @@ if has("autocmd")
 	    au BufWrite,Syntax * syntax match localWhitespaceError /\s\+$/ display
 
 		" add coffee files to autocomplete
-		" au BufNewFile,BufReadPost *.co,*.coffee set filetype=coffee
-		au BufNewFile,BufReadPost *.co,*.coffee :call HotCoffeeInit()
+		" added BufWinEnter to force correct path detection in HotCoffeeInit
+		" -> not using BufWinEnter sets the pwd to a wrong dir (base path)
+		"
+		" BufWinEnter called in gvim when entering tabs, windows, etc.
+		" no other BufEnter, etc. needed (at least in gvim)
+		au BufNewFile,BufRead *.co,*.coffee :call HotCoffeeInit()
 
 		" For all text files set 'textwidth' to 78 characters.
 		au FileType text setlocal textwidth=78
