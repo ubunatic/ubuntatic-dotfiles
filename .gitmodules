@@ -1,0 +1,51 @@
+
+[submodule "bundle/vim-surround"]
+	path = .vim/bundle/vim-surround
+	url = https://github.com/tpope/vim-surround.git
+	ignore = dirty
+
+[submodule "bundle/vim-commentary"]
+	path = .vim/bundle/vim-commentary
+	url = https://github.com/tpope/vim-commentary.git
+	ignore = dirty
+
+[submodule "bundle/vim-abolish"]
+	path = .vim/bundle/vim-abolish
+	url = https://github.com/tpope/vim-abolish.git
+	ignore = dirty   
+
+[submodule "bundle/nerdtree"]
+	path = .vim/bundle/nerdtree
+	url = https://github.com/scrooloose/nerdtree.git
+	ignore = dirty
+
+[submodule "bundle/vim-coffee-script"]
+	path = .vim/bundle/vim-coffee-script
+	url = https://github.com/kchmck/vim-coffee-script.git
+	ignore = dirty
+
+[submodule "bundle/supertab"]
+	path = .vim/bundle/supertab
+	url = https://github.com/ervandew/supertab.git
+	ignore = dirty
+
+[submodule "bundle/snipmate"]
+	path = .vim/bundle/snipmate.vim
+	url = https://github.com/msanders/snipmate.vim.git
+	ignore = dirty
+
+[submodule "bundle/xptemplate"]
+	path = .vim/bundle/xptemplate
+	url = https://github.com/drmingdrmer/xptemplate.git
+	ignore = dirty
+
+[submodule "bundle/shymenu"]
+	path = .vim/bundle/shymenu_vim
+	url = https://github.com/tomtom/shymenu_vim.git
+	ignore = dirty
+
+[submodule "bundle/coffeescript-snips"]
+	path = .vim/bundle/coffeescript-snips
+	url = https://github.com/carlosvillu/coffeScript-VIM-Snippets.git
+	ignore = dirty 
+
