@@ -50,8 +50,9 @@ function! HotCoffeeGoto(...)
 			else
 				let l:file = l:file.".coffee"
 			endif
-		endif                                    " open the found (or empty/new) file
-		exec ":tab drop ".l:file
+		endif                                   " open the found (or empty/new) file
+		"edit the file, use :e file OR :tab drop file
+		exec ':e '.l:file
 	endif
 endfunction
 command! HotCoffeeGoto :call HotCoffeeGoto(expand("<cfile>"))
@@ -234,6 +235,8 @@ set guioptions-=r     " remove right-hand scroll bar
 set autoindent        " always set autoindenting on
 set hidden            " allow buffer switches from unsaved files.
 set switchbuf=usetab  " respect open tabs when swtiching buffers
+
+let tlist_coffee_settings = 'coffee;c:class;v:variable;f:function'
 
 " Plug options:
 " EasyGrep is broken with *.co *.coffee, disabled it for now
