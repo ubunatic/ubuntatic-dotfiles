@@ -105,7 +105,7 @@ function! HotCoffeeGrep(...)
 		endtry
 	endif
 endfunction
-command! -nargs=1 HotCoffeeGrep :call HotCoffeeGrep(<f-args>)
+command! -nargs=* HotCoffeeGrep :call HotCoffeeGrep(<f-args>)
 
 function! HotCoffeeComplete()
 	if !pumvisible()
@@ -121,7 +121,7 @@ function! HotCoffeeComplete()
 	" - reduce intital list when typing [a-zA-Z_0-9@$]
 	" - updated list
 endfunction
-command! -nargs=0 HotCoffeeGrep :call HotCoffeeComplete() 
+command! -nargs=0 HotCoffeeComplete :call HotCoffeeComplete() 
 
 function! HotCoffeeCompile(...)
 	let l:pdir  = call("HotCoffeeFindProject", []) " find the 'src' dir; your coffee project should contain one
@@ -176,9 +176,9 @@ set keywordprg=:help
 set backspace=indent,eol,start
 
 if has("vms")
-	set nobackup 		" do not keep a backup file, use versions instead
+	set nobackup    " do not keep a backup file, use versions instead
 else
-	set backup 		" keep a backup file
+	set backup      " keep a backup file
 endif
 
 " avoid messing up source folders with backup files
@@ -207,7 +207,7 @@ set foldmethod=indent " use space to fold/unfold code; use syntax or indent
 set foldminlines=8    " do not fold small blocks
 set novisualbell      " disable blinking terminals
 set noerrorbells      " disable any beeps
-set wrap              " do not wrap text
+set nowrap            " do not wrap text
 set linebreak         " smart brake if wrap is enabled
 set wrapmargin=0      " # of chars from RIGHT border where auto wrapping starts
 set textwidth=0       " disable fixed text width
@@ -236,9 +236,12 @@ set autoindent        " always set autoindenting on
 set hidden            " allow buffer switches from unsaved files.
 set switchbuf=usetab  " respect open tabs when swtiching buffers
 
+set laststatus=2              " always show ths status line
+let g:buftabs_only_basename=1 " show only the filename in as buftab label
+let g:buftabs_in_statusline=1 " always show open files in status line
+
 let tlist_coffee_settings = 'coffee;c:class;v:variable;f:function'
 
-" Plug options:
 " EasyGrep is broken with *.co *.coffee, disabled it for now
 " let g:EasyGrepRecursive=1     "Enable recusrive search. Be careful when using Grep from $HOME, etc.
 " let g:EasyGrepMode=2          "Set Grep to use only specific filetypes
@@ -251,6 +254,9 @@ let tlist_coffee_settings = 'coffee;c:class;v:variable;f:function'
 "                | | | | +-> Modified flag
 "                | | | | | +-> Left/right alignment separator
 set statusline=%f\ %h%y%r%m%=
+
+" adding buftabs to the status line
+set statusline+=%{buftabs#statusline()}
 
 " Warn on syntax errors
 " set statusline+=%#warningmsg#%{SyntasticStatuslineFlag()}%*
@@ -475,7 +481,7 @@ elseif has("win32") || has("win64")
 endif
 
 " Don't use Ex mode, use Q for formatting
-map Q gq
+map <S-q> gq
 nnoremap <space> za
 nnoremap <C-space> zi
 map <C-Tab> gt<CR>
