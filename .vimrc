@@ -221,7 +221,7 @@ set encoding=utf-8    " force UTF-8 also for windows
 set fileencoding=utf-8 " set encoding when writing files
 set guioptions+=a     " enable autocopy using mouse or visual. Works independently of :y[ank]
 set cpoptions+=$      " indicate change ranges with a $-sign
-set virtualedit=all   " allow moving in non-text areas
+set virtualedit=insert,block,onemore " allow moving in non-text areas
 set wildmenu          " show completion for menu entries, :*TAB
 set mousehide         " hide mouse when typing, move it to show again
 set report=0          " always report if a command changes some lines
@@ -403,6 +403,10 @@ imap <A-o> <Esc><Esc>o
 onoremap w iw
 vnoremap w iw
 
+" <end> moves one char right
+" (works only if virtualedit is set to onemore or all)
+nnoremap <end> <end>l
+
 " remap arrows to hjkl
 noremap <left> h
 noremap <right> l
@@ -416,10 +420,10 @@ noremap <C-up> (
 noremap <C-down> )
 
 " start select and mark first line (subline)
-imap <S-Home> <ESC>v_
-imap <S-End> <ESC>v$
-nmap <S-Home> v_
-nmap <S-End> v$
+imap <S-home> <ESC>v<home>
+imap <S-end> <ESC>v$
+nmap <S-home> v<home>
+nmap <S-end> v$
 
 " init visual mode when starting SHIFT+Arrows selection
 " start select and mark first character
@@ -518,6 +522,10 @@ vnoremap <S-CR> <ESC>
 nnoremap d<S-Space> :%s/\s\+$//gc<CR>
 nnoremap d<Space> $a<space><Esc>diw$
 
+" map del/backspace to start insert mode from normal mode
+nnoremap <del> i<del>
+nnoremap <bs> i<bs>
+
 " In many terminal emulators the mouse works just fine, thus enable it.
 if has('mouse')
 	set mouse=a
@@ -526,14 +534,14 @@ endif
 if has("gui_running")
 	" GUI is running or is about to start.
 	" Maximize gvim window.
-	set lines=61 columns=138
+	set lines=61 columns=158
 else
 	" This is console Vim.
 	if exists("+lines")
 		set lines=61
 	endif
 	if exists("+columns")
-		set columns=138
+		set columns=158
 	endif
 endif
 
@@ -549,36 +557,51 @@ if has("autocmd")
 	filetype plugin indent on
 
 
-	highlight link localWhitespaceError Error
+	" highlight link localWhitespaceError Error
+	" highlight link localIndentError Error
+	" highlight link ExtraWhitespace Ignore
+	" highlight link ExtraWhitespace Error
+	" highlight link BadWhitespaceError Ignore
+	" highlight link ExtraWhitespace2 Error
+	" highlight link ExtraWhitespace3 Error
+	" highlight link ExtraWhitespace4 Error
 
- 	" color magic
+	" color magic
 	set background=dark
 	colorscheme desert
 	highlight Pmenu guifg='Black' guibg='White'
 	highlight PmenuSel guifg='Black' guibg='Gray'
 	highlight Search guibg='Purple' guifg='NONE'
 
+	" The following comments are used for testing whitespace matching
+  	" This line has wrong leading whitespace
+	" This line has traling whitespace    
+	" The line below has wrong leading whitespace
+  	
+	" The line below has a leading TABs (not highlighted)
+		
+	highlight BadWhitespace ctermbg=blue guibg=blue
+
 	" Put these in an autocmd group, so that we can delete them easily.
 	aug vimrcEx
 		au!
-		" highlight ExtraWhitespace ctermbg=red guibg=red
-		" match ExtraWhitespace /\s\+$/
-		" au InsertEnter * syntax match ExtraWhitespace /\s\+\%#\@<!$/
-		" au InsertLeave * sytax match ExtraWhitespace /\s\+$/
-		" au BufLeave * call clearmatches()
-
 		" au VIMEnter * winpos 0,0
 		au GUIEnter * winpos 0 0
 
-	    au BufWrite,Syntax * syntax match localWhitespaceError /\s\+$/ display
-
+		" Highlight non-TAB leading whitespace and ALL traling whitespace
+		" does NOT highlight TABs on empty lines, as prodiced by many tools
+		au BufWinEnter,BufWrite,InsertLeave * match BadWhitespace /[^\t ]\s\+$\|^\s* \s*/
+		au InsertEnter * match BadWhitespace /[^\t ]\s\+\%#\@<!$\|^\s* \s*/
+		au BufWinLeave * call clearmatches()
+		" matching code adopted from http://vim.wikia.com/wiki/Highlight_unwanted_spaces
+		
 		" add coffee files to autocomplete
 		" added BufWinEnter to force correct path detection in HotCoffeeInit
 		" -> not using BufWinEnter sets the pwd to a wrong dir (base path)
 		"
 		" BufWinEnter called in gvim when entering tabs, windows, etc.
 		" no other BufEnter, etc. needed (at least in gvim)
-		au BufNewFile,BufRead *.co,*.coffee :call HotCoffeeInit()
+		au BufNewFile,BufReadPost *.co,*.coffee :call HotCoffeeInit()
 
 		" For all text files set 'textwidth' to 78 characters.
 		au FileType text setlocal textwidth=78
