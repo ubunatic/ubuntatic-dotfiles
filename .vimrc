@@ -33,26 +33,120 @@ function! HotCoffeeFindProject(...)
 endfunction
 command! -nargs=* HotCoffeeFindProject :call HotCoffeeFindProject(<f-args>)
 
-function! HotCoffeeGoto(...)
-	if a:0 == 0
-		return 0                                " no file specified
-	elseif a:0 >= 1                             " one filesearch string specified
-		let l:file = expand("%:p:h")."/".a:1    " save full path of filesearch string
-		if filereadable(l:file.".co")           " try to read filesearch.co
-			let l:file = l:file.".co"           "   found it: save it!
-		elseif filereadable(l:file.".coffee")   " try to read filesearch.coffee
-			let l:file = l:file.".coffee"       "   found it: save it!
-		elseif filereadable(l:file)             " try to read filesearch (no extension)
-			let l:file = l:file                 "   found it: save it!
-		else                                    " no files found, assuming you want to create a new file
-			if expand("%:e") == "co"            " check which type of file ext you are cirrently using
-				let l:file = l:file.".co"       " and use it for the new file
-			else
-				let l:file = l:file.".coffee"
+function! HotCoffeeGetFilePlainJS( path )
+	if match( a:path, '\.js$') == -1                               " if no .js repeat match with 'a:path'.js
+		let l:file =  HotCoffeeGetFilePlainJS( a:path.".js" )
+	else
+		if filereadable( a:path )                                  " test if it existis (plain path)
+			let l:file = a:path
+		else
+			let l:pdir = HotCoffeeFindProject()
+			if filereadable( l:pdir."/".a:path )                   " test if is exists in project dir
+				let l:file = l:pdir."/".a:path
+			elseif filereadable( l:pdir."/lib/".a:path )           " test if is exists in 'lib' dir
+				let l:file = l:pdir."/lib/".a:path
+			else                                                   " JavaScript file not found
+				let l:file = ""
 			endif
-		endif                                   " open the found (or empty/new) file
+		endif
+	endif
+	return l:file
+endfunction
+
+function! HotCoffeeGetFileJS( path )
+	let l:file = ""
+	let l:jsfile = HotCoffeeGetFilePlainJS( a:path )               " get direct link to JavaScript <cfile>
+	let l:cofile = HotCoffeeGetFile( a:path )                      " get default link to CoffeeScript <cfile>
+	if filereadable( l:jsfile )                                    " JavaScript file found for <cfile>
+		let l:file = l:jsfile
+	elseif filereadable( l:cofile )                                  " CoffeeScript file found fo <cfile>
+		let l:jsfile = substitute( l:cofile, '\(^.*\)/src/\(.*\)\.co[fe]*', '\1/lib/\2.js', '')
+		let l:jsfile = HotCoffeeGetFilePlainJS( l:jsfile )              " get link to  JavaScript <cfile>
+		if filereadable( l:jsfile )
+			let l:file = l:jsfile
+		else
+			let l:file = ""
+		endif
+	endif
+	return l:file
+endfunction
+
+function! HotCoffeeGotoJS( path )
+	let l:jsfile = HotCoffeeGetFileJS( a:path )
+	let l:lofile = HotCoffeeGetFileJS( expand("%:p") )
+	let l:file = ""
+	if filereadable( l:jsfile )
+		let l:file = l:jsfile
+	elseif filereadable( l:lofile )
+		let l:file = l:lofile
+	endif
+
+	if empty(a:path)
+		echo "JavaScript file not found for pattern '".a:path."'"
+	else
+		"DEBUG: echo a:path.": '".l:jsfile."' -- ".expand("%:p").": '".l:lofile."'"
+		exec ":vsplit ".l:file." | lcd %:p:h"
+	endif
+endfunction
+command! HotCoffeeGotoJS :call HotCoffeeGotoJS(expand("<cfile>"))
+
+" HotCoffeeGetFile returns full paths for different file lookups
+" It uses `a:path` to find (in this order):
+"
+" 1. direct match                                      (if readable)
+" 2. relative .co file                                 (if readable)
+" 3. relative .coffee file                             (if readable)
+" 4. relative file (matching `a:path`)                 (if readable)
+" 5. project-relative file (matching `a:path`)         (if readable)
+" 6. new relative .co file (if current file is .co)
+" 7. new relative .coffee file
+function! HotCoffeeGetFile( path )
+	if empty(a:path)
+		return ""
+	elseif filereadable( a:path )                   " check if a:path is a direct link
+		return a:path
+	else
+		let l:file = expand("%:p:h")."/".a:path     " save full path of filesearch string
+		if filereadable(l:file.".co")               " try to read filesearch.co
+			let l:file = l:file.".co"               "   found it!
+		elseif filereadable(l:file.".coffee")       " try to read filesearch.coffee
+			let l:file = l:file.".coffee"           "   found it!
+		elseif filereadable(l:file)                 " try to read filesearch (no extension)
+			let l:file = l:file                     "   found it!
+		else
+			let l:pdir = HotCoffeeFindProject()
+			if filereadable(l:pdir."/".a:path)      " try to read project related asset file
+				let l:file = l:pdir."/".a:path      "   found it!
+			else                                    " no files found, assuming you want to create a new file
+				if expand("%:e") == "co"            " check which type of file ext you are cirrently using
+					let l:ext = ".co"               " and use it for the new file
+				else
+					let l:ext = ".coffee"
+				endif
+				let l:file = l:file.l:ext
+			endif
+		endif
+		return l:file                               " return the found (or empty/new) file
+	endif
+endfunction
+
+function! HotCoffeeGoto( path )
+	let l:file = HotCoffeeGetFile( a:path )
+	if !empty(l:file)
 		"edit the file, use :e file OR :tab drop file
-		exec ':e '.l:file
+		if filereadable(l:file)
+			echo "opening ".l:file
+			exec ':e '.l:file
+		else
+			if confirm("Creating new file:\n".l:file."\n\n(Press ESC to cancel)")
+				echo "creating new file '".l:file."'"
+				exec ':e '.l:file
+			else
+				echo "'".l:file."' not created"
+			endif
+		endif
+	else
+		echo "File not found: ".l:file
 	endif
 endfunction
 command! HotCoffeeGoto :call HotCoffeeGoto(expand("<cfile>"))
@@ -60,6 +154,7 @@ command! HotCoffeeGoto :call HotCoffeeGoto(expand("<cfile>"))
 function! HotCoffeeInit()
 	setlocal filetype=coffee
 	noremap <buffer> gf :HotCoffeeGoto<CR>
+	noremap <buffer> gj :HotCoffeeGotoJS<CR>
 	let pdir = HotCoffeeFindProject()
 
 	exec 'lcd '.pdir
@@ -95,7 +190,7 @@ function! HotCoffeeGrep(...)
 		elseif match( a:1, "ref" ) != -1
 			" similar to property match, but adds '{ <name> }' to detect destructuring assignment
 			let pattern = '/[@\.]'.expand("<cword>").'\|^\s*'.expand("<cword>").'\s*:\|{.*'.expand("<cword>").'.*}/'
-        endif
+		endif
 		let pdir = HotCoffeeFindProject()
 		try
 			exec 'silent lvimgrep '.pattern.' '.pdir.'/**/*.'.expand("%:e").' | lopen'
@@ -536,14 +631,14 @@ endif
 if has("gui_running")
 	" GUI is running or is about to start.
 	" Maximize gvim window.
-	set lines=61 columns=158
+	set lines=62 columns=138
 else
 	" This is console Vim.
 	if exists("+lines")
-		set lines=61
+		set lines=62
 	endif
 	if exists("+columns")
-		set columns=158
+		set columns=138
 	endif
 endif
 
