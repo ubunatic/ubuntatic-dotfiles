@@ -121,7 +121,7 @@ function! HotCoffeeComplete()
 	" - reduce intital list when typing [a-zA-Z_0-9@$]
 	" - updated list
 endfunction
-command! -nargs=0 HotCoffeeComplete :call HotCoffeeComplete() 
+command! -nargs=0 HotCoffeeComplete :call HotCoffeeComplete()
 
 function! HotCoffeeCompile(...)
 	let l:pdir  = call("HotCoffeeFindProject", []) " find the 'src' dir; your coffee project should contain one
@@ -326,6 +326,8 @@ nnoremap <C-kMinus> <C-X>
 " copied from $VIM/mswin.vim
 " backspace in Visual mode deletes selection
 vnoremap <BS> d
+
+" nnoremap <S-I> $_<S-I>
 
 " CTRL-X and SHIFT-Del are Cut
 vnoremap <C-X> "+x
@@ -582,6 +584,22 @@ if has("autocmd")
 		
 	highlight BadWhitespace ctermbg=blue guibg=blue
 
+	function! BadWhitespaceMatch()
+		match BadWhitespace /[^\t ]\s\+$/
+	endfunction
+
+	function! BadWhitespaceMatchInsert()
+		match BadWhitespace /[^\t ]\s\+\%#\@<!$/
+	endfunction
+
+	function! BadWhitespaceMatchCoffee()
+		match BadWhitespace /[^\t ]\s\+$\|^\s* \s*/
+	endfunction
+
+	function! BadWhitespaceMatchCoffeeInsert()
+		match BadWhitespace /[^\t ]\s\+\%#\@<!$\|^\s* \s*/
+	endfunction
+
 	" Put these in an autocmd group, so that we can delete them easily.
 	aug vimrcEx
 		au!
@@ -590,8 +608,12 @@ if has("autocmd")
 
 		" Highlight non-TAB leading whitespace and ALL traling whitespace
 		" does NOT highlight TABs on empty lines, as prodiced by many tools
-		au BufWinEnter,BufWrite,InsertLeave * match BadWhitespace /[^\t ]\s\+$\|^\s* \s*/
-		au InsertEnter * match BadWhitespace /[^\t ]\s\+\%#\@<!$\|^\s* \s*/
+		au BufWinEnter,BufWrite,InsertLeave * call BadWhitespaceMatch()
+		au InsertEnter * call BadWhitespaceMatchInsert()
+
+		au BufWinEnter,BufWrite,InsertLeave *.co,*.coffee call BadWhitespaceMatchCoffee()
+		au InsertEnter * call BadWhitespaceMatchCoffeeInsert()
+
 		au BufWinLeave * call clearmatches()
 		" matching code adopted from http://vim.wikia.com/wiki/Highlight_unwanted_spaces
 		
