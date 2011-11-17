@@ -130,6 +130,15 @@ function! HotCoffeeGetFile( path )
 	endif
 endfunction
 
+function! HotCoffeeGetOtherFile( path )
+	if filereadable( a:path )
+		if match( a:path, '\.js$') >= 0        " return coffee file for a:path JS file
+			return substitute(a:path, '\(^.*\)/lib/\(.*\)\.js$', '\1/src/\2.co', 'g')
+		endif
+	endif
+	return a:path
+endfunction
+
 function! HotCoffeeGoto( path )
 	let l:file = HotCoffeeGetFile( a:path )
 	if !empty(l:file)
@@ -219,7 +228,7 @@ endfunction
 command! -nargs=0 HotCoffeeComplete :call HotCoffeeComplete()
 
 function! HotCoffeeCompile(...)
-	let l:pdir  = call("HotCoffeeFindProject", []) " find the 'src' dir; your coffee project should contain one
+	let l:pdir  = HotCoffeeFindProject()      " find the 'src' dir; your coffee project should contain one
 	let l:error = ''                            " empty error == success ;)
 	cgetexpr ''                                 " clear cwindow
 	if isdirectory(l:pdir."/src")               " double check if the 'src' dir there
@@ -229,17 +238,43 @@ function! HotCoffeeCompile(...)
 			exec 'lcd '.l:pdir
 			let l:output = system('node build.js')
 			" echo l:output
-			let l:result = ""
+			let l:result = ''
+			let l:code = ''
+			let l:lastitem = ''
 			for item in split(l:output, '\n')
-				if match( item, '^Error: In' ) >= 0
+				if match( item, '^\s*^\s*$' ) >= 0     " found code pointer ^, marking above text
+					let l:code = substitute( l:lastitem, '^\s*\(.*\)\s*$', '\1', 'g')
+				elseif match( item, '^Error: In' ) >= 0
+					" find coffeescript errors
 					let l:line = substitute( item, '.* line \(\d*\).*', '\1', 'g')
 					let l:file = substitute( item, '^Error: In \([^,]*\),.*', '\1', 'g' )
-					let l:text = substitute( item, '^Error: In .*line \d*[\s:]*\(.*\)$', '\1', 'g' )
-					let l:result .= l:pdir.'/'.l:file.'|'.l:line.'| '.l:text.'\n'
+					" let l:text = substitute( item, '^Error: In .*line \d*[\s:]*\(.*\)$', '\1', 'g' )
+					let l:text = substitute( item, '^Error: In [^,]*,\(.*\)$', '\1', 'g' )
+					let l:result .= l:pdir.'/'.l:file.'|'.l:line.'| '.l:text
+					if !empty(l:code)
+						let l:result .= ', '.l:code
+						let l:code = ''
+					endif
+					let l:result .= "\n"
 					" let l:result .= l:pdir.'/'.substitute( item,'Error: In \(.*\),\(.*\),.*line \(\d*\)', '\1|\3| \2','g')."\n"
-				elseif match( item, '^[a-zA-Z]*[Ee]*rror:' ) >= 0
-					let l:result .= item."\n"   " also grep other errors. TODO: support more error types
+				elseif match( item, '^[a-zA-Z\s]*[Ee]*rror:' ) >= 0
+					" also grep other errors. TODO: support more error types
+					let l:text = item
+					if !empty(l:code)
+						let l:text .= ', '.l:code
+						let l:code = ''          " clear code for later use
+					endif
+					let l:error = l:item
+				elseif !empty(l:error)
+					" find node.js errors
+					let l:file = substitute( item, '^\s*at \([^:]*\):.*', '\1', 'g' )
+					if !empty(l:file) && filereadable(l:file)
+						let l:line = substitute( item, '.*:\(\d*\):.*', '\1', 'g')
+						let l:result .= HotCoffeeGetOtherFile(l:file).'|'.l:line.'| '.l:text."\n"
+						let l:error = ''         " clear error flag for tracking more errors
+					endif
 				endif
+				let l:lastitem = item
 			endfor
 			if strlen(l:result) > 0
 				let l:error = l:result
@@ -708,6 +743,9 @@ if has("autocmd")
 
 		au BufWinEnter,BufWrite,InsertLeave *.co,*.coffee call BadWhitespaceMatchCoffee()
 		au InsertEnter * call BadWhitespaceMatchCoffeeInsert()
+
+		" au BufWinEnter,BufWrite,InsertLeave * match BadWhitespace /[^\t ]\s\+$\|^\s* \s*/
+		" au InsertEnter * match BadWhitespace /[^\t ]\s\+\%#\@<!$\|^\s* \s*/
 
 		au BufWinLeave * call clearmatches()
 		" matching code adopted from http://vim.wikia.com/wiki/Highlight_unwanted_spaces
