@@ -81,8 +81,8 @@ function! HotCoffeeGotoJS( path )
 		let l:file = l:lofile
 	endif
 
-	if empty(a:path)
-		echo "JavaScript file not found for pattern '".a:path."'"
+	if empty(l:file)
+		echo "JavaScript file not found for pattern '".l:file."'"
 	else
 		"DEBUG: echo a:path.": '".l:jsfile."' -- ".expand("%:p").": '".l:lofile."'"
 		exec ":vsplit ".l:file." | lcd %:p:h"
@@ -202,11 +202,14 @@ function! HotCoffeeGrep(...)
 		endif
 		let pdir = HotCoffeeFindProject()
 		try
-			exec 'silent lvimgrep '.pattern.' '.pdir.'/**/*.'.expand("%:e").' | lopen'
+			exec 'silent lvimgrep '.pattern.' '.pdir.'/**/*.'.expand("%:e")
+			" .' | lopen'
+		catch /E315/
+			" TODO: check funny E315 line number errors. (the try block still works though)
 		catch /E480/
-			lexpr 'no match for "'.expand("<cword>").'", greptype: '.a:1
-			lopen
+			lexpr 'E480, no match for "'.expand("<cword>").'", greptype: '.a:1
 		endtry
+		lopen
 	endif
 endfunction
 command! -nargs=* HotCoffeeGrep :call HotCoffeeGrep(<f-args>)
@@ -666,7 +669,14 @@ endif
 if has("gui_running")
 	" GUI is running or is about to start.
 	" Maximize gvim window.
-	set lines=62 columns=138
+	"if has("win32") || has("win64")
+		" set fixed height in windows (vertical screen)
+		"set lines=62
+	"else
+		" maximize window height in linux (wide tft)
+		"set lines=999
+	"endif
+	set columns=138
 else
 	" This is console Vim.
 	if exists("+lines")
@@ -733,8 +743,15 @@ if has("autocmd")
 	" Put these in an autocmd group, so that we can delete them easily.
 	aug vimrcEx
 		au!
+
 		" au VIMEnter * winpos 0,0
-		au GUIEnter * winpos 0 0
+		if has("win32") || has("win64")
+			" vertical monitor at work
+			au GUIEnter * winpos 0 0 | set lines=62
+		else
+			" big wide tft at home
+			au GUIEnter * winpos 350 0 | set lines=999
+		endif
 
 		" Highlight non-TAB leading whitespace and ALL traling whitespace
 		" does NOT highlight TABs on empty lines, as prodiced by many tools
@@ -756,7 +773,7 @@ if has("autocmd")
 		"
 		" BufWinEnter called in gvim when entering tabs, windows, etc.
 		" no other BufEnter, etc. needed (at least in gvim)
-		au BufNewFile,BufReadPost *.co,*.coffee :call HotCoffeeInit()
+		au BufNewFile,BufReadPost,BufWinEnter *.co,*.coffee :call HotCoffeeInit()
 
 		" For all text files set 'textwidth' to 78 characters.
 		au FileType text setlocal textwidth=78
