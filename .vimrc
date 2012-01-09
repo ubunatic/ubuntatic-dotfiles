@@ -359,7 +359,7 @@ set wildmenu          " show completion for menu entries, :*TAB
 set mousehide         " hide mouse when typing, move it to show again
 set report=0          " always report if a command changes some lines
 set laststatus=2      " always keep a status line for the last window
-set noshellslash      " do not convert backslash path chars to forward slashes (luac needs noshellslash)
+set shellslash        " do not convert backslash path chars to forward slashes ATTENTION:(luac may need noshellslash)
 set shortmess=at      " truncate and abbreviate shell messages
 set ttyfast           " indicate fast terminal: better/smooth scrolling, extra screenline characters??
 set guioptions-=m     " remove menu bar
