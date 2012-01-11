@@ -62,11 +62,12 @@ function! HotCoffeeGetFileJS( path )
 	elseif filereadable( l:cofile )                                  " CoffeeScript file found fo <cfile>
 		let l:jsfile = substitute( l:cofile, '\(^.*\)/src/\(.*\)\.co[fe]*', '\1/lib/\2.js', '')
 		let l:jsfile = HotCoffeeGetFilePlainJS( l:jsfile )              " get link to  JavaScript <cfile>
-		if filereadable( l:jsfile )
-			let l:file = l:jsfile
-		else
-			let l:file = ""
-		endif
+"		if filereadable( l:jsfile )
+"			let l:file = l:jsfile
+"		else
+"			let l:file = ""
+"		endif
+		let l:file = l:jsfile
 	endif
 	return l:file
 endfunction
