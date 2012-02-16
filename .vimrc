@@ -163,8 +163,9 @@ command! HotCoffeeGoto :call HotCoffeeGoto(expand("<cfile>"))
 
 function! HotCoffeeInit()
 	setlocal filetype=coffee
-	noremap <buffer> gf :HotCoffeeGoto<CR>
-	noremap <buffer> gj :HotCoffeeGotoJS<CR>
+	noremap <buffer> gf  :HotCoffeeGoto<CR>
+	noremap <buffer> gfc :HotCoffeeGoto<CR>
+	noremap <buffer> gfj :HotCoffeeGotoJS<CR>
 	let pdir = HotCoffeeFindProject()
 
 	exec 'lcd '.pdir
@@ -648,8 +649,8 @@ map Ü {
 
 " use old english 'search key' on german layout (first key left of R-Shift)
 noremap - /
-noremap ß _
 noremap _ ?
+noremap <HOME> _
 
 " escape out of insert mode using Shift+Enter
 imap <S-CR> <ESC>
@@ -813,10 +814,4 @@ if !exists(":DiffOrig")
 endif
 
 " switch to the users Home dir instead of the systems root
-" or switch to my windows project dir
-if has("win32") || has("win64")
-	cd E:\projects
-else
-	cd $HOME
-endif
-
+" cd $HOME
