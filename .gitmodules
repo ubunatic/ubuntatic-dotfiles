@@ -54,3 +54,9 @@
 	url = https://github.com/tpope/vim-fugitive.git
 	ignore = dirty 
 
+[submodule "bundle/vim-less"]
+	path = .vim/bundle/vim-less
+	url = https://github.com/groenewege/vim-less.git
+[submodule "bundle/lua"]
+	path = .vim/bundle/lua
+	url = https://github.com/vim-scripts/lua.vim.git
