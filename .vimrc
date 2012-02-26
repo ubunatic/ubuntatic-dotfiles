@@ -427,6 +427,9 @@ elseif has("win32") || has("win64")
 	map <leader>ev :e! $VIM/_vimrc<cr>
 endif
 
+map <leader>b :FufFileWithCurrentBufferDir **/<C-M> 
+map <leader>bb :FufBuffer<C-M>
+
 " f/fw: find word, fc: find class, fp: find property, fu/fr: find usings/references
 nnoremap <leader>ff :HotCoffeeGrep word<CR>
 nnoremap <leader>fw :HotCoffeeGrep word<CR>
@@ -649,6 +652,7 @@ map Ü {
 
 " use old english 'search key' on german layout (first key left of R-Shift)
 noremap - /
+noremap ß _
 noremap _ ?
 noremap <HOME> _
 
