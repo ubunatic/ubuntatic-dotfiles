@@ -57,12 +57,16 @@
 [submodule "bundle/vim-less"]
 	path = .vim/bundle/vim-less
 	url = https://github.com/groenewege/vim-less.git
+
 [submodule "bundle/lua"]
 	path = .vim/bundle/lua
 	url = https://github.com/vim-scripts/lua.vim.git
-[submodule "bundle/vim-less"]
-	path = .vim/bundle/vim-less
-	url = https://github.com/groenewege/vim-less.git
+
 [submodule "bundle/minibufexpl"]
 	path = .vim/bundle/minibufexpl
 	url = https://github.com/fholgado/minibufexpl.vim.git
+
+[submodule "bundle/luainspect"]
+	path = .vim/bundle/luainspect
+	url  = https://github.com/xolox/vim-lua-inspect.git
+
