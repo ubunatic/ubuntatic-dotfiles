@@ -616,20 +616,20 @@ map <A-right> <ESC>:Tlist<CR>
 map <A-up> <ESC>:bp<CR>
 
 " Add fontsizes to F8-F12
-" if has("unix")
-" 	map  <F8> <ESC>:set guifont=Monospace\ 8<CR>
-" 	map  <F9> <ESC>:set guifont=Monospace\ 10<CR>
-" 	map <F10> <ESC>:set guifont=Monospace\ 12<CR>
-" 	map <F11> <ESC>:set guifont=Monospace\ 16<CR>
-" 	map <F12> <ESC>:set guifont=Monospace\ 20<CR>
-" elseif has("win32") || has("win64")
-" 	map  <F8> <ESC>:set guifont=DejaVu_Sans_Mono:h8:cANSI<CR>
-" 	map  <F9> <ESC>:set guifont=DejaVu_Sans_Mono:h10:cANSI<CR>
-" 	map <F10> <ESC>:set guifont=DejaVu_Sans_Mono:h12:cANSI<CR>
-" 	map <F11> <ESC>:set guifont=DejaVu_Sans_Mono:h16:cANSI<CR>
-" 	map <F12> <ESC>:set guifont=DejaVu_Sans_Mono:h20:cANSI<CR>
-" 	set guifont=DejaVu_Sans_Mono:h10:cANSI
-" endif
+if has("unix")
+	map  <F8> <ESC>:set guifont=Monospace\ 8<CR>
+	map  <F9> <ESC>:set guifont=Monospace\ 10<CR>
+	map <F10> <ESC>:set guifont=Monospace\ 12<CR>
+	map <F11> <ESC>:set guifont=Monospace\ 16<CR>
+	map <F12> <ESC>:set guifont=Monospace\ 20<CR>
+elseif has("win32") || has("win64")
+	map  <F8> <ESC>:set guifont=DejaVu_Sans_Mono:h8:cANSI<CR>
+	map  <F9> <ESC>:set guifont=DejaVu_Sans_Mono:h10:cANSI<CR>
+	map <F10> <ESC>:set guifont=DejaVu_Sans_Mono:h12:cANSI<CR>
+	map <F11> <ESC>:set guifont=DejaVu_Sans_Mono:h16:cANSI<CR>
+	map <F12> <ESC>:set guifont=DejaVu_Sans_Mono:h20:cANSI<CR>
+	set guifont=DejaVu_Sans_Mono:h10:cANSI
+endif
 
 " Don't use Ex mode, use Q for formatting
 map <S-q> gq
@@ -758,13 +758,13 @@ if has("autocmd")
 		au!
 
 		" au VIMEnter * winpos 0,0
-		" if has("win32") || has("win64")
+		if has("win32") || has("win64")
 			" vertical monitor at work
-			" au GUIEnter * winpos 0 0 | set lines=62
-		" else
+			au GUIEnter * winpos 0 0 | set lines=62
+		else
 			" big wide tft at home
-			" au GUIEnter * winpos 350 0 | set lines=999
-		" endif
+			au GUIEnter * winpos 350 0 | set lines=999
+		endif
 
 		" Highlight non-TAB leading whitespace and ALL traling whitespace
 		" does NOT highlight TABs on empty lines, as prodiced by many tools
