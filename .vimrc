@@ -18,12 +18,13 @@ function! HotCoffeeFindProject(...)
 		else
 			echo "Path not found: " a:1
 		endif
-	elseif a:0 == 2 && a:1 < &maxfuncdepth - 1         " stop recursion BEFORE maxdepth (100) is reached
-		let l:success = isdirectory(a:2."/.hotcoffee") " test if dir contians the 'src' dir
-		if l:success                                   " return found dir or recurse once more
+	elseif a:0 == 2 && a:1 < &maxfuncdepth - 1           " stop recursion BEFORE maxdepth (100) is reached
+		if isdirectory(a:2."/src")                       " test if dir contians the 'src' dir
+			return a:2
+		elseif filereadable(a:2."/CakeFile")             " test if a CakeFile exists
 			return a:2
 		else
-			return call("HotCoffeeFindProject", [ a:1 + 1, a:2."/.."] )
+			return call("HotCoffeeFindProject", [ a:1 + 1, a:2."/.."] )  " increase recursion depth and recall
 		endif
 	else
 		echo "Could not locate project directory"
@@ -62,11 +63,11 @@ function! HotCoffeeGetFileJS( path )
 	elseif filereadable( l:cofile )                                  " CoffeeScript file found fo <cfile>
 		let l:jsfile = substitute( l:cofile, '\(^.*\)/src/\(.*\)\.co[fe]*', '\1/lib/\2.js', '')
 		let l:jsfile = HotCoffeeGetFilePlainJS( l:jsfile )              " get link to  JavaScript <cfile>
-"		if filereadable( l:jsfile )
-"			let l:file = l:jsfile
-"		else
-"			let l:file = ""
-"		endif
+		" if filereadable( l:jsfile )
+		" 	let l:file = l:jsfile
+		" else
+		" 	let l:file = ""
+		" endif
 		let l:file = l:jsfile
 	endif
 	return l:file
@@ -86,7 +87,8 @@ function! HotCoffeeGotoJS( path )
 		echo "JavaScript file not found for pattern '".l:file."'"
 	else
 		"DEBUG: echo a:path.": '".l:jsfile."' -- ".expand("%:p").": '".l:lofile."'"
-		exec ":vsplit ".l:file." | lcd %:p:h"
+		exec ":vsplit ".l:file
+		"removed, TODO: check if this works  ." | lcd %:p:h"
 	endif
 endfunction
 command! HotCoffeeGotoJS :call HotCoffeeGotoJS(expand("<cfile>"))
@@ -133,7 +135,7 @@ endfunction
 
 function! HotCoffeeGetOtherFile( path )
 	if filereadable( a:path )
-		if match( a:path, '\.js$') >= 0        " return coffee file for a:path JS file
+		if match( a:path, '\.js$') >= 0             " return coffee file for a:path JS file
 			return substitute(a:path, '\(^.*\)/lib/\(.*\)\.js$', '\1/src/\2.co', 'g')
 		endif
 	endif
@@ -168,7 +170,8 @@ function! HotCoffeeInit()
 	noremap <buffer> gfj :HotCoffeeGotoJS<CR>
 	let pdir = HotCoffeeFindProject()
 
-	exec 'lcd '.pdir
+	" exec 'lcd '.pdir
+	" coffee-script-vim does not like changed dirs -> call HotCoffeeFindProject manually
 	" append this for debugging: .' | cexpr "switching to '.pdir.'" | copen'
 
 	" does not work correctly when opening via gvim --remote-tab
@@ -187,11 +190,11 @@ function! HotCoffeeGrep(...)
 		throw "HotCoffeeGrep: wrong usage, I need arguments"
 		return
 	else
-		let pattern = expand("<cword>")
+		let pattern = '/'.expand("<cword>").'/'
 		if match( a:1, "class") != -1
 			" matches: any 'class <ClassName>' OR lines starting with <ClassName> = do
 			" the latter is used for 'static classes' containing consts, etc.
-			let pattern = '/^'.expand("<cword>").'\s*[=:]\s*do\|^\s*class\s*'.expand("<cword>").'\s*$/gj'
+			let pattern = '/^.*'.expand("<cword>").'\s*[=:]\s*do\|^\s*class\s*'.expand("<cword>").'\s*$/'
 		elseif match( a:1, "prop") != -1
 			" matches: '@<name> =' OR '@<name> :' OR '<name>:'
 			" the @<name> syntax is the default for properties
@@ -203,15 +206,18 @@ function! HotCoffeeGrep(...)
 			let pattern = '/[@\.]'.expand("<cword>").'\|^\s*'.expand("<cword>").'\s*:\|{.*'.expand("<cword>").'.*}/'
 		endif
 		let pdir = HotCoffeeFindProject()
+		let cwd = getcwd()
 		try
-			exec 'silent lvimgrep '.pattern.' '.pdir.'/**/*.'.expand("%:e")
-			" .' | lopen'
+			" the j flag only fills the lwindow instead of opening
+			" cd pdir is used to reduce path names in lwindow
+			exec 'cd '.pdir.' | silent lvimgrep '.pattern.'j **/*.'.expand("%:e")
 		catch /E315/
 			" TODO: check funny E315 line number errors. (the try block still works though)
 		catch /E480/
 			lexpr 'E480, no match for "'.expand("<cword>").'", greptype: '.a:1
 		endtry
-		lopen
+		" the cwd trick allows to use short path names and still make all refs from lwindow work fine
+		lopen | exec 'cd '.cwd
 	endif
 endfunction
 command! -nargs=* HotCoffeeGrep :call HotCoffeeGrep(<f-args>)
@@ -232,73 +238,73 @@ function! HotCoffeeComplete()
 endfunction
 command! -nargs=0 HotCoffeeComplete :call HotCoffeeComplete()
 
-function! HotCoffeeCompile(...)
-	let l:pdir  = HotCoffeeFindProject()      " find the 'src' dir; your coffee project should contain one
-	let l:error = ''                            " empty error == success ;)
-	cgetexpr ''                                 " clear cwindow
-	if isdirectory(l:pdir."/src")               " double check if the 'src' dir there
-		if filereadable(l:pdir."/build.js")     " check if build.js exisits
-			" echo "Compiling coffee files"
-			" build the project and get errors
-			exec 'lcd '.l:pdir
-			let l:output = system('node build.js')
-			" echo l:output
-			let l:result = ''
-			let l:code = ''
-			let l:lastitem = ''
-			for item in split(l:output, '\n')
-				if match( item, '^\s*^\s*$' ) >= 0     " found code pointer ^, marking above text
-					let l:code = substitute( l:lastitem, '^\s*\(.*\)\s*$', '\1', 'g')
-				elseif match( item, '^Error: In' ) >= 0
-					" find coffeescript errors
-					let l:line = substitute( item, '.* line \(\d*\).*', '\1', 'g')
-					let l:file = substitute( item, '^Error: In \([^,]*\),.*', '\1', 'g' )
-					" let l:text = substitute( item, '^Error: In .*line \d*[\s:]*\(.*\)$', '\1', 'g' )
-					let l:text = substitute( item, '^Error: In [^,]*,\(.*\)$', '\1', 'g' )
-					let l:result .= l:pdir.'/'.l:file.'|'.l:line.'| '.l:text
-					if !empty(l:code)
-						let l:result .= ', '.l:code
-						let l:code = ''
-					endif
-					let l:result .= "\n"
-					" let l:result .= l:pdir.'/'.substitute( item,'Error: In \(.*\),\(.*\),.*line \(\d*\)', '\1|\3| \2','g')."\n"
-				elseif match( item, '^[a-zA-Z\s]*[Ee]*rror:' ) >= 0
-					" also grep other errors. TODO: support more error types
-					let l:text = item
-					if !empty(l:code)
-						let l:text .= ', '.l:code
-						let l:code = ''          " clear code for later use
-					endif
-					let l:error = l:item
-				elseif !empty(l:error)
-					" find node.js errors
-					let l:file = substitute( item, '^\s*at \([^:]*\):.*', '\1', 'g' )
-					if !empty(l:file) && filereadable(l:file)
-						let l:line = substitute( item, '.*:\(\d*\):.*', '\1', 'g')
-						let l:result .= HotCoffeeGetOtherFile(l:file).'|'.l:line.'| '.l:text."\n"
-						let l:error = ''         " clear error flag for tracking more errors
-					endif
-				endif
-				let l:lastitem = item
-			endfor
-			if strlen(l:result) > 0
-				let l:error = l:result
-			endif
-		else
-			let l:error = "Compile error! Buildfile not found. Please create $PROJECT/build.js."
-		endif
-	else
-		let l.error = "Compile error! Project dir not found. Please create $PROJECT/src."
-	endif
-	if strlen(l:error) > 0      " check if error is empty. otherwise assume success
-		cgetexpr l:error        " pipe error into cwindow
-		copen                   " open cwindow (usually only opens if it has errors)
-	else
-		cclose
-		echo "Build successful"
-	endif
-endfunction
-command! -nargs=* HotCoffeeCompile :call HotCoffeeCompile(<f-args>)
+" function! HotCoffeeCompile(...)
+" 	let l:pdir  = HotCoffeeFindProject()      " find the 'src' dir; your coffee project should contain one
+" 	let l:error = ''                            " empty error == success ;)
+" 	cgetexpr ''                                 " clear cwindow
+" 	if isdirectory(l:pdir."/src")               " double check if the 'src' dir there
+" 		if filereadable(l:pdir."/build.js")     " check if build.js exisits
+" 			" echo "Compiling coffee files"
+" 			" build the project and get errors
+" 			exec 'lcd '.l:pdir
+" 			let l:output = system('node build.js')
+" 			" echo l:output
+" 			let l:result = ''
+" 			let l:code = ''
+" 			let l:lastitem = ''
+" 			for item in split(l:output, '\n')
+" 				if match( item, '^\s*^\s*$' ) >= 0     " found code pointer ^, marking above text
+" 					let l:code = substitute( l:lastitem, '^\s*\(.*\)\s*$', '\1', 'g')
+" 				elseif match( item, '^Error: In' ) >= 0
+" 					" find coffeescript errors
+" 					let l:line = substitute( item, '.* line \(\d*\).*', '\1', 'g')
+" 					let l:file = substitute( item, '^Error: In \([^,]*\),.*', '\1', 'g' )
+" 					" let l:text = substitute( item, '^Error: In .*line \d*[\s:]*\(.*\)$', '\1', 'g' )
+" 					let l:text = substitute( item, '^Error: In [^,]*,\(.*\)$', '\1', 'g' )
+" 					let l:result .= l:pdir.'/'.l:file.'|'.l:line.'| '.l:text
+" 					if !empty(l:code)
+" 						let l:result .= ', '.l:code
+" 						let l:code = ''
+" 					endif
+" 					let l:result .= "\n"
+" 					" let l:result .= l:pdir.'/'.substitute( item,'Error: In \(.*\),\(.*\),.*line \(\d*\)', '\1|\3| \2','g')."\n"
+" 				elseif match( item, '^[a-zA-Z\s]*[Ee]*rror:' ) >= 0
+" 					" also grep other errors. TODO: support more error types
+" 					let l:text = item
+" 					if !empty(l:code)
+" 						let l:text .= ', '.l:code
+" 						let l:code = ''          " clear code for later use
+" 					endif
+" 					let l:error = l:item
+" 				elseif !empty(l:error)
+" 					" find node.js errors
+" 					let l:file = substitute( item, '^\s*at \([^:]*\):.*', '\1', 'g' )
+" 					if !empty(l:file) && filereadable(l:file)
+" 						let l:line = substitute( item, '.*:\(\d*\):.*', '\1', 'g')
+" 						let l:result .= HotCoffeeGetOtherFile(l:file).'|'.l:line.'| '.l:text."\n"
+" 						let l:error = ''         " clear error flag for tracking more errors
+" 					endif
+" 				endif
+" 				let l:lastitem = item
+" 			endfor
+" 			if strlen(l:result) > 0
+" 				let l:error = l:result
+" 			endif
+" 		else
+" 			let l:error = "Compile error! Buildfile not found. Please create $PROJECT/build.js."
+" 		endif
+" 	else
+" 		let l.error = "Compile error! Project dir not found. Please create $PROJECT/src."
+" 	endif
+" 	if strlen(l:error) > 0      " check if error is empty. otherwise assume success
+" 		cgetexpr l:error        " pipe error into cwindow
+" 		copen                   " open cwindow (usually only opens if it has errors)
+" 	else
+" 		cclose
+" 		echo "Build successful"
+" 	endif
+" endfunction
+" command! -nargs=* HotCoffeeCompile :call HotCoffeeCompile(<f-args>)
 
 
 " load plugin bundles via pathogen
@@ -760,10 +766,10 @@ if has("autocmd")
 		" au VIMEnter * winpos 0,0
 		if has("win32") || has("win64")
 			" vertical monitor at work
-			au GUIEnter * winpos 0 0 | set lines=62
+			au GUIEnter * winpos 0 0 | set lines=62 | cd $HOME
 		else
 			" big wide tft at home
-			au GUIEnter * winpos 350 0 | set lines=999
+			au GUIEnter * winpos 350 0 | set lines=999 | cd $HOME
 		endif
 
 		" Highlight non-TAB leading whitespace and ALL traling whitespace
@@ -786,7 +792,7 @@ if has("autocmd")
 		"
 		" BufWinEnter called in gvim when entering tabs, windows, etc.
 		" no other BufEnter, etc. needed (at least in gvim)
-		au BufNewFile,BufReadPost,BufWinEnter *.co,*.coffee :call HotCoffeeInit()
+		au BufNewFile,BufReadPost,BufWinEnter *.co,*.coffee,CakeFile :call HotCoffeeInit()
 
 		" For all text files set 'textwidth' to 78 characters.
 		au FileType text setlocal textwidth=78
@@ -808,7 +814,7 @@ if has("autocmd")
 		" au BufWritePost,FileWritePost *.co,*.coffee !cat <afile> | coffee -scb 2>&1
 		" au BufWritePost,FileWritePost coffee :silent !coffee -c <afile>
 		" au BufNewFile,BufReadPost *.co,*.coffee setl foldmethod=indent nofoldenable
-		au BufWritePost,FileWritePost *.co,*.coffee silent HotCoffeeCompile
+		" au BufWritePost,FileWritePost *.co,*.coffee silent CoffeeCompile
 
 		" autoload vimrc if it has been changed
 		au BufWritePost *.vimrc,_vimrc so %
@@ -824,5 +830,3 @@ if !exists(":DiffOrig")
 				\ | wincmd p | diffthis
 endif
 
-" switch to the users Home dir instead of the systems root
-" cd $HOME
