@@ -70,4 +70,8 @@
 	path = .vim/bundle/luainspect
 	url  = https://github.com/xolox/vim-lua-inspect.git
 
+[submodule "bundle/mru"]
+	path = .vim/bundle/mru
+	url  = https://github.com/vim-scripts/mru.vim.git
+
 
