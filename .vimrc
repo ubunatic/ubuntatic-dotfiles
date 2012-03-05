@@ -169,7 +169,7 @@ function! HotCoffeeInit()
 	noremap <buffer> gfc :HotCoffeeGoto<CR>
 	noremap <buffer> gfj :HotCoffeeGotoJS<CR>
 	let pdir = HotCoffeeFindProject()
-
+	" let coffee_make_options = '-p'
 	" exec 'lcd '.pdir
 	" coffee-script-vim does not like changed dirs -> call HotCoffeeFindProject manually
 	" append this for debugging: .' | cexpr "switching to '.pdir.'" | copen'
@@ -194,7 +194,9 @@ function! HotCoffeeGrep(...)
 		if match( a:1, "class") != -1
 			" matches: any 'class <ClassName>' OR lines starting with <ClassName> = do
 			" the latter is used for 'static classes' containing consts, etc.
-			let pattern = '/^.*'.expand("<cword>").'\s*[=:]\s*do\|^\s*class\s*'.expand("<cword>").'\s*$/'
+			let pattern = '/[^a-zA-Z0-9_]class.*'.expand("<cword>").'\|'.expand("<cword>").'\s*=\s*do/g'
+			" let pattern = '/[^a-zA-Z0-9_]class\s\s*'.expand("<cword>").'\s*$\|[^a-zA-Z0-9_]'.expand("<cword>").'\s*=/g'
+			" '/^.*'.expand("<cword>").'\s*[=:]\s*do\|^.*class\s*'.expand("<cword>").'\s*$/'
 		elseif match( a:1, "prop") != -1
 			" matches: '@<name> =' OR '@<name> :' OR '<name>:'
 			" the @<name> syntax is the default for properties
@@ -205,19 +207,27 @@ function! HotCoffeeGrep(...)
 			" similar to property match, but adds '{ <name> }' to detect destructuring assignment
 			let pattern = '/[@\.]'.expand("<cword>").'\|^\s*'.expand("<cword>").'\s*:\|{.*'.expand("<cword>").'.*}/'
 		endif
-		let pdir = HotCoffeeFindProject()
-		let cwd = getcwd()
+		let l:pdir = HotCoffeeFindProject()
+		let l:cwd = getcwd()
+		let l:grepcmd = 'silent lvimgrep '.pattern.'j ./**/*.'.expand("%:e")
 		try
 			" the j flag only fills the lwindow instead of opening
 			" cd pdir is used to reduce path names in lwindow
-			exec 'cd '.pdir.' | silent lvimgrep '.pattern.'j **/*.'.expand("%:e")
+			"exec 'cd '.l:pdir.' | '.
+			exec 'cd '.l:pdir.' | '.l:grepcmd
+			".' | lopen | cd '.l:cwd
 		catch /E315/
 			" TODO: check funny E315 line number errors. (the try block still works though)
 		catch /E480/
-			lexpr 'E480, no match for "'.expand("<cword>").'", greptype: '.a:1
+			lexpr 'E480, no match for "'.pattern.'", greptype: '.a:1
+			ladd  'grepcmd '.l:grepcmd.'
+			ladd  'in      '.l:pdir
 		endtry
 		" the cwd trick allows to use short path names and still make all refs from lwindow work fine
-		lopen | exec 'cd '.cwd
+		lopen
+		exec 'cd '.l:cwd
+		" ladd  'grep '.l:grepcmd
+		" ladd  'in   '.l:pdir
 	endif
 endfunction
 command! -nargs=* HotCoffeeGrep :call HotCoffeeGrep(<f-args>)
@@ -239,70 +249,70 @@ endfunction
 command! -nargs=0 HotCoffeeComplete :call HotCoffeeComplete()
 
 " function! HotCoffeeCompile(...)
-" 	let l:pdir  = HotCoffeeFindProject()      " find the 'src' dir; your coffee project should contain one
-" 	let l:error = ''                            " empty error == success ;)
-" 	cgetexpr ''                                 " clear cwindow
-" 	if isdirectory(l:pdir."/src")               " double check if the 'src' dir there
-" 		if filereadable(l:pdir."/build.js")     " check if build.js exisits
-" 			" echo "Compiling coffee files"
-" 			" build the project and get errors
-" 			exec 'lcd '.l:pdir
-" 			let l:output = system('node build.js')
-" 			" echo l:output
-" 			let l:result = ''
-" 			let l:code = ''
-" 			let l:lastitem = ''
-" 			for item in split(l:output, '\n')
-" 				if match( item, '^\s*^\s*$' ) >= 0     " found code pointer ^, marking above text
-" 					let l:code = substitute( l:lastitem, '^\s*\(.*\)\s*$', '\1', 'g')
-" 				elseif match( item, '^Error: In' ) >= 0
-" 					" find coffeescript errors
-" 					let l:line = substitute( item, '.* line \(\d*\).*', '\1', 'g')
-" 					let l:file = substitute( item, '^Error: In \([^,]*\),.*', '\1', 'g' )
-" 					" let l:text = substitute( item, '^Error: In .*line \d*[\s:]*\(.*\)$', '\1', 'g' )
-" 					let l:text = substitute( item, '^Error: In [^,]*,\(.*\)$', '\1', 'g' )
-" 					let l:result .= l:pdir.'/'.l:file.'|'.l:line.'| '.l:text
-" 					if !empty(l:code)
-" 						let l:result .= ', '.l:code
-" 						let l:code = ''
-" 					endif
-" 					let l:result .= "\n"
-" 					" let l:result .= l:pdir.'/'.substitute( item,'Error: In \(.*\),\(.*\),.*line \(\d*\)', '\1|\3| \2','g')."\n"
-" 				elseif match( item, '^[a-zA-Z\s]*[Ee]*rror:' ) >= 0
-" 					" also grep other errors. TODO: support more error types
-" 					let l:text = item
-" 					if !empty(l:code)
-" 						let l:text .= ', '.l:code
-" 						let l:code = ''          " clear code for later use
-" 					endif
-" 					let l:error = l:item
-" 				elseif !empty(l:error)
-" 					" find node.js errors
-" 					let l:file = substitute( item, '^\s*at \([^:]*\):.*', '\1', 'g' )
-" 					if !empty(l:file) && filereadable(l:file)
-" 						let l:line = substitute( item, '.*:\(\d*\):.*', '\1', 'g')
-" 						let l:result .= HotCoffeeGetOtherFile(l:file).'|'.l:line.'| '.l:text."\n"
-" 						let l:error = ''         " clear error flag for tracking more errors
-" 					endif
-" 				endif
-" 				let l:lastitem = item
-" 			endfor
-" 			if strlen(l:result) > 0
-" 				let l:error = l:result
-" 			endif
-" 		else
-" 			let l:error = "Compile error! Buildfile not found. Please create $PROJECT/build.js."
-" 		endif
-" 	else
-" 		let l.error = "Compile error! Project dir not found. Please create $PROJECT/src."
-" 	endif
-" 	if strlen(l:error) > 0      " check if error is empty. otherwise assume success
-" 		cgetexpr l:error        " pipe error into cwindow
-" 		copen                   " open cwindow (usually only opens if it has errors)
-" 	else
-" 		cclose
-" 		echo "Build successful"
-" 	endif
+	" 	let l:pdir  = HotCoffeeFindProject()      " find the 'src' dir; your coffee project should contain one
+	" 	let l:error = ''                            " empty error == success ;)
+	" 	cgetexpr ''                                 " clear cwindow
+	" 	if isdirectory(l:pdir."/src")               " double check if the 'src' dir there
+	" 		if filereadable(l:pdir."/build.js")     " check if build.js exisits
+	" 			" echo "Compiling coffee files"
+	" 			" build the project and get errors
+	" 			exec 'lcd '.l:pdir
+	" 			let l:output = system('node build.js')
+	" 			" echo l:output
+	" 			let l:result = ''
+	" 			let l:code = ''
+	" 			let l:lastitem = ''
+	" 			for item in split(l:output, '\n')
+	" 				if match( item, '^\s*^\s*$' ) >= 0     " found code pointer ^, marking above text
+	" 					let l:code = substitute( l:lastitem, '^\s*\(.*\)\s*$', '\1', 'g')
+	" 				elseif match( item, '^Error: In' ) >= 0
+	" 					" find coffeescript errors
+	" 					let l:line = substitute( item, '.* line \(\d*\).*', '\1', 'g')
+	" 					let l:file = substitute( item, '^Error: In \([^,]*\),.*', '\1', 'g' )
+	" 					" let l:text = substitute( item, '^Error: In .*line \d*[\s:]*\(.*\)$', '\1', 'g' )
+	" 					let l:text = substitute( item, '^Error: In [^,]*,\(.*\)$', '\1', 'g' )
+	" 					let l:result .= l:pdir.'/'.l:file.'|'.l:line.'| '.l:text
+	" 					if !empty(l:code)
+	" 						let l:result .= ', '.l:code
+	" 						let l:code = ''
+	" 					endif
+	" 					let l:result .= "\n"
+	" 					" let l:result .= l:pdir.'/'.substitute( item,'Error: In \(.*\),\(.*\),.*line \(\d*\)', '\1|\3| \2','g')."\n"
+	" 				elseif match( item, '^[a-zA-Z\s]*[Ee]*rror:' ) >= 0
+	" 					" also grep other errors. TODO: support more error types
+	" 					let l:text = item
+	" 					if !empty(l:code)
+	" 						let l:text .= ', '.l:code
+	" 						let l:code = ''          " clear code for later use
+	" 					endif
+	" 					let l:error = l:item
+	" 				elseif !empty(l:error)
+	" 					" find node.js errors
+	" 					let l:file = substitute( item, '^\s*at \([^:]*\):.*', '\1', 'g' )
+	" 					if !empty(l:file) && filereadable(l:file)
+	" 						let l:line = substitute( item, '.*:\(\d*\):.*', '\1', 'g')
+	" 						let l:result .= HotCoffeeGetOtherFile(l:file).'|'.l:line.'| '.l:text."\n"
+	" 						let l:error = ''         " clear error flag for tracking more errors
+	" 					endif
+	" 				endif
+	" 				let l:lastitem = item
+	" 			endfor
+	" 			if strlen(l:result) > 0
+	" 				let l:error = l:result
+	" 			endif
+	" 		else
+	" 			let l:error = "Compile error! Buildfile not found. Please create $PROJECT/build.js."
+	" 		endif
+	" 	else
+	" 		let l.error = "Compile error! Project dir not found. Please create $PROJECT/src."
+	" 	endif
+	" 	if strlen(l:error) > 0      " check if error is empty. otherwise assume success
+	" 		cgetexpr l:error        " pipe error into cwindow
+	" 		copen                   " open cwindow (usually only opens if it has errors)
+	" 	else
+	" 		cclose
+	" 		echo "Build successful"
+	" 	endif
 " endfunction
 " command! -nargs=* HotCoffeeCompile :call HotCoffeeCompile(<f-args>)
 
@@ -527,6 +537,8 @@ vnoremap < <gv
 " generate html of current view and copy html code
 nmap <C-h> :runtime syntax/2html.vim<cr>ggvG$"+x
 
+vnoremap <F4> :CoffeeCompile vert<CR>
+nnoremap <F4> :CoffeeCompile vert<CR>
 nmap <F5> :CoffeeRun<CR>
 " :w<CR>:make<CR>:cw<CR>
 imap <F5> <ESC><F5>
@@ -759,6 +771,15 @@ if has("autocmd")
 		match BadWhitespace /[^\t ]\s\+\%#\@<!$\|^\s* \s*/
 	endfunction
 
+	function! JumpToCursor()
+		if filereadable(expand("%")) > 0
+			" do default cursor stuff (copied from example)
+			if line("'\"") > 1 && line("'\"") <= line("$")
+				exe "normal! g`\""
+			endif
+		endif
+	endfunction
+
 	" Put these in an autocmd group, so that we can delete them easily.
 	aug vimrcEx
 		au!
@@ -802,10 +823,7 @@ if has("autocmd")
 		" (happens when dropping a file on gvim).
 		" Also don't do it when the mark is in the first line, that is the default
 		" position when opening a file.
-		au BufReadPost *
-					\ if line("'\"") > 1 && line("'\"") <= line("$") |
-					\   exe "normal! g`\"" |
-					\ endif
+		" au BufReadPost * :call JumpToCursor()
 
 		" au FileType coffee set makeprg=coffee\ -c\ %
 		" auto compile coffee files silently but show errors add '| redraw!' for
@@ -815,7 +833,7 @@ if has("autocmd")
 		" au BufWritePost,FileWritePost coffee :silent !coffee -c <afile>
 		" au BufNewFile,BufReadPost *.co,*.coffee setl foldmethod=indent nofoldenable
 		" au BufWritePost,FileWritePost *.co,*.coffee silent CoffeeCompile
-
+		au BufWritePost *.coffee silent CoffeeMake! -p | cwindow | redraw!
 		" autoload vimrc if it has been changed
 		au BufWritePost *.vimrc,_vimrc so %
 
