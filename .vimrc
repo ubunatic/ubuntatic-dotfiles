@@ -18,10 +18,12 @@ function! HotCoffeeFindProject(...)
 		else
 			echo "Path not found: " a:1
 		endif
-	elseif a:0 == 2 && a:1 < &maxfuncdepth - 1           " stop recursion BEFORE maxdepth (100) is reached
-		if isdirectory(a:2."/src")                       " test if dir contians the 'src' dir
-			return a:2
-		elseif filereadable(a:2."/CakeFile")             " test if a CakeFile exists
+	elseif a:0 == 2 && a:1 < &maxfuncdepth - 1       " stop recursion BEFORE maxdepth (100) is reached
+		if isdirectory(a:2."/src")                   " test if dir contians the 'src' dir
+			\ || filereadable(a:2."/Cakefile")       " test if a Cakefile exists
+			\ || filereadable(a:2."/Makefile")       " test if a Nakefile exists
+			\ || filereadable(a:2."/build.js")       " test if a build.js exists
+			\ || filereadable(a:2."/.project")       " test if a .project exists
 			return a:2
 		else
 			return call("HotCoffeeFindProject", [ a:1 + 1, a:2."/.."] )  " increase recursion depth and recall
@@ -163,12 +165,28 @@ function! HotCoffeeGoto( path )
 endfunction
 command! HotCoffeeGoto :call HotCoffeeGoto(expand("<cfile>"))
 
+function! HotCoffeeRunJasmine()
+		let l:pdir = HotCoffeeFindProject()
+		let l:cwd = getcwd()
+		exec 'cd '.l:pdir
+		exec '! jasmine-node --coffee --noColor spec'
+		exec 'cd '.l:cwd
+endfunction
+command! HotCoffeeRunJasmine :call HotCoffeeRunJasmine()
+
 function! HotCoffeeInit()
 	setlocal filetype=coffee
+	"set noexpandtab
+	setlocal tabstop=2 shiftwidth=2 softtabstop=2
 	noremap <buffer> gf  :HotCoffeeGoto<CR>
 	noremap <buffer> gfc :HotCoffeeGoto<CR>
 	noremap <buffer> gfj :HotCoffeeGotoJS<CR>
 	let pdir = HotCoffeeFindProject()
+	let $APP = pdir
+	if isdirectory($APP."/spec")
+		map <buffer>  <F5> :HotCoffeeRunJasmine<CR>
+		imap <buffer> <F5> <ESC>:HotCoffeeRunJasmine<CR>
+	endif
 	" let coffee_make_options = '-p'
 	" exec 'lcd '.pdir
 	" coffee-script-vim does not like changed dirs -> call HotCoffeeFindProject manually
@@ -366,6 +384,7 @@ set foldminlines=8    " do not fold small blocks
 set novisualbell      " disable blinking terminals
 set noerrorbells      " disable any beeps
 set nowrap            " do not wrap text
+set noexpandtab       " do not use spaces for tabs, TABS rule!
 set linebreak         " smart brake if wrap is enabled
 set wrapmargin=0      " # of chars from RIGHT border where auto wrapping starts
 set textwidth=0       " disable fixed text width
@@ -450,7 +469,7 @@ map <leader>ev :e! $HOME/.vimrc<cr>
 "	map <leader>ev :e! $VIM/_vimrc<cr>
 "endif
 
-map <leader>b :FufFileWithCurrentBufferDir **/<C-M> 
+map <leader>b :FufFileWithCurrentBufferDir **/<C-M>
 map <leader>bb :FufBuffer<C-M>
 
 " f/fw: find word, fc: find class, fp: find property, fu/fr: find usings/references
@@ -542,6 +561,7 @@ nnoremap <F4> :CoffeeCompile vert<CR>
 nmap <F5> :CoffeeRun<CR>
 " :w<CR>:make<CR>:cw<CR>
 imap <F5> <ESC><F5>
+vmap <F5> :CoffeeRun<CR>
 nmap <F6> :set spell!<CR>
 nmap <F7> :set wrap!<CR>
 nmap <ESC>l :set list!<CR>
@@ -707,14 +727,14 @@ if has("gui_running")
 		" maximize window height in linux (wide tft)
 		"set lines=999
 	"endif
-	set columns=138
+	set columns=195
 else
 	" This is console Vim.
 	if exists("+lines")
 		set lines=62
 	endif
 	if exists("+columns")
-		set columns=138
+		set columns=195
 	endif
 endif
 
@@ -790,7 +810,7 @@ if has("autocmd")
 			au GUIEnter * winpos 0 0 | set lines=62 | cd $HOME
 		else
 			" big wide tft at home
-			au GUIEnter * winpos 350 0 | set lines=999 | cd $HOME
+			au GUIEnter * winpos 336 0 | set lines=59 | cd $HOME
 		endif
 
 		" Highlight non-TAB leading whitespace and ALL traling whitespace
@@ -813,10 +833,13 @@ if has("autocmd")
 		"
 		" BufWinEnter called in gvim when entering tabs, windows, etc.
 		" no other BufEnter, etc. needed (at least in gvim)
-		au BufNewFile,BufReadPost,BufWinEnter *.co,*.coffee,CakeFile :call HotCoffeeInit()
+		au BufNewFile,BufReadPost,BufWinEnter *.co,*.coffee,Cakefile :call HotCoffeeInit()
 
 		" For all text files set 'textwidth' to 78 characters.
 		au FileType text setlocal textwidth=78
+		"au FileType jade set noexpandtab
+		"au FileType less set noexpandtab
+		" tabstop=2 softtabstop=2 shiftwidth=2
 
 		" When editing a file, always jump to the last known cursor position.
 		" Don't do it when the position is invalid or when inside an event handler
