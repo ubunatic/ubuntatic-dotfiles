@@ -59,10 +59,10 @@
 	url  = https://github.com/michaeljsmith/vim-indent-object.git
 	ignore = dirty
 
-[submodule "bundle/vim-jade"]
-	path = .vim/bundle/vim-jade
-	url  = https://github.com/digitaltoad/vim-jade.git
-	ignore = dirty
+#[submodule "bundle/vim-jade"]
+#	path = .vim/bundle/vim-jade
+#	url  = https://github.com/digitaltoad/vim-jade.git
+#	ignore = dirty
 
 [submodule "bundle/vim-numbertoggle"]
 	path = .vim/bundle/vim-numbertoggle

@@ -1,11 +1,21 @@
 "
-"
 " Author:       Uwe Jugel <uwe.jugel@googlemail.com>
-" Last change:  2011 Aug 17
 "
 "
 
 set nocompatible " This must be first, because it changes other options as a side effect.
+
+
+function! HotHelperSave()
+	if expand("%p:h") == ".vimrc"
+		echo "Can't use HotHelperSave while editing .vimrc. Use :w instead!"
+	elseif filereadable(expand("%p:h"))
+		exec ":w"
+	else
+		exec ":browse saveas"
+	endif
+endfunction
+command! HotHelperSave :call HotHelperSave()
 
 function! HotCoffeeFindProject(...)
 	if a:0 == 0                                 " inital call: call self on current file
@@ -337,7 +347,7 @@ command! -nargs=0 HotCoffeeComplete :call HotCoffeeComplete()
 
 " load plugin bundles via pathogen
 filetype off
-set nocp
+set nocompatible
 " set rtp+=/path/to/rtp/that/included/pathogen/vim " if needed
 call pathogen#infect()
 syntax on
@@ -384,17 +394,17 @@ set foldminlines=8    " do not fold small blocks
 set novisualbell      " disable blinking terminals
 set noerrorbells      " disable any beeps
 set nowrap            " do not wrap text
-set noexpandtab       " do not use spaces for tabs, TABS rule!
+set noexpandtab       " do not use spaces for tabs, real TABS rule!
 set linebreak         " smart brake if wrap is enabled
-set wrapmargin=0      " # of chars from RIGHT border where auto wrapping starts
+set wrapmargin=1      " # of chars from RIGHT border where auto wrapping starts
 set textwidth=0       " disable fixed text width
 set smartindent       " allow smart indenting
 set autoindent        " allow auto indenting (supported by smart indenting)
-set scrolloff=7       " keep 7 lines visible from current line
-set sidescrolloff=10  " keep 10 chars visible from current column
+set scrolloff=3       " keep 7 lines visible from current line
+set sidescrolloff=5   " keep 10 chars visible from current column
 set whichwrap+=b,<,>,[,] " let backspace and arrow keys move to next/prev line in vis and normal mode
 set nolazyredraw      " Don't redraw while executing macros
-set encoding=utf-8    " force UTF-8 also for windows
+set encoding=utf-8     " force UTF-8 also for windows
 set fileencoding=utf-8 " set encoding when writing files
 set guioptions+=a     " enable autocopy using mouse or visual. Works independently of :y[ank]
 set cpoptions+=$      " indicate change ranges with a $-sign
@@ -413,15 +423,10 @@ set autoindent        " always set autoindenting on
 set hidden            " allow buffer switches from unsaved files.
 set switchbuf=usetab  " respect open tabs when swtiching buffers
 
-set laststatus=2              " always show ths status line
 let g:buftabs_only_basename=1 " show only the filename in as buftab label
 let g:buftabs_in_statusline=1 " always show open files in status line
 
 let tlist_coffee_settings = 'coffee;c:class;v:variable;f:function'
-
-" EasyGrep is broken with *.co *.coffee, disabled it for now
-" let g:EasyGrepRecursive=1     "Enable recusrive search. Be careful when using Grep from $HOME, etc.
-" let g:EasyGrepMode=2          "Set Grep to use only specific filetypes
 
 "-- Status Line ---- adopted from https://github.com/nocash/vim-rc.git --------------------------------
 "                +-> Relative file path
@@ -469,6 +474,7 @@ map <leader>ev :e! $HOME/.vimrc<cr>
 "	map <leader>ev :e! $VIM/_vimrc<cr>
 "endif
 
+" open fuzzyfinder
 map <leader>b :FufFileWithCurrentBufferDir **/<C-M>
 map <leader>bb :FufBuffer<C-M>
 
@@ -481,8 +487,9 @@ nnoremap <leader>fu :HotCoffeeGrep ref<CR>
 nnoremap <leader>fr :HotCoffeeGrep ref<CR>
 
 "Useful when moving accross long lines
-map j gj
-map k gk
+"What does is actually do?
+"map j gj
+"map k gk
 
 " Tab configuration
 map <leader>tn :tabnew! %<cr>
@@ -491,13 +498,13 @@ map <leader>tc :tabclose<cr>
 map <leader>tm :tabmov
 
 " When pressing <leader>cd switch to the directory of the open buffer
-map <leader>cd :cd %:p:h<cr>e
+map <leader>cd :cd %:p:h<cr>
 
 set pastetoggle=<C-F3>        " Press F3 for toggle paste mode
-nnoremap <leader>v "+gP     " Paste using ,v in normal mode
-nnoremap <leader>p "+gP     " Paste using ,p in normal mode
-nnoremap <leader>c "+y      " Copy using ,c in normal mode
-nnoremap <leader>y "+y      " Copy using ,y in normal mode
+" nnoremap <leader>v "+gP     " Paste using ,v in normal mode
+" nnoremap <leader>p "+gP     " Paste using ,p in normal mode
+" nnoremap <leader>c "+y      " Copy using ,c in normal mode
+" nnoremap <leader>y "+y      " Copy using ,y in normal mode
 
 " map increase/decrease to new keys
 nnoremap <C-kPlus> <C-A>
@@ -524,7 +531,7 @@ vnoremap <C-Insert> "+y
 map <S-Insert> "+gP
 
 " use C-V and Shift-Ins as paste
-cmap <C-V> <C-R>+
+" cmap <C-V> <C-R>+
 cmap <S-Insert> <C-R>+
 
 " CTRL-A selects all
@@ -533,9 +540,10 @@ nnoremap <C-A> ggvG$
 inoremap <C-A> <Esc>ggvG$
 
 " use ^ as additional <Esc>
-map ^ <Esc>
-inoremap ^ <Esc>
-inoremap <C-^> ^
+" DISABLED! Sinceit makes a lot of problems
+" map ^ <Esc>
+" inoremap ^ <Esc>
+" inoremap <C-^> ^
 
 " easy access to @
 map <A-q> @
@@ -569,11 +577,12 @@ nmap <ESC>n :set number!<CR>
 nmap <ESC><SPACE> :nohl<CR>
 nmap <leader><SPACE> :nohl<CR>
 
+
 " save file dialog mapped to <Ctrl-[Alt]-s>
-nnoremap <C-A-s> :browse saveas<CR>
-inoremap <C-A-s> <Esc>:browse saveas<CR>
-nnoremap <C-s> :w<CR>
-inoremap <C-s> <Esc>:w<CR>
+nnoremap <A-s> :browse saveas<CR>
+inoremap <A-s> <Esc>:browse saveas<CR>
+nnoremap <C-s> :HotHelperSave<CR>
+inoremap <C-s> <Esc>:HotHelperSave<CR>
 
 nnoremap <Esc>e :tabe %:p:h/<cfile><CR>
 
@@ -583,11 +592,12 @@ nmap <Esc>o :browse tabe<CR>
 nmap <A-o> <Esc>o
 imap <A-o> <Esc><Esc>o
 
-" work on whole words. changes the whole word and not only its tails
+" work on whole words. changes the whole word and not only its tail
 " used for example with d, y, c, v, etc.
 onoremap w iw
 vnoremap w iw
 
+" Common Text Editor Movements: (CTRL/SHIFT-based)
 " <end> moves one char right
 " (works only if virtualedit is set to onemore or all)
 nnoremap <end> <end>l
@@ -598,9 +608,9 @@ noremap <right> l
 noremap <up> gk
 noremap <down> gj
 
-" remap Ctlr+arrows to word/sentence selection
-noremap <C-left> b
-noremap <C-right> w
+" remap Ctrl+arrows to word/sentence selection
+noremap <C-left> B
+noremap <C-right> W
 noremap <C-up> (
 noremap <C-down> )
 
@@ -618,10 +628,10 @@ nmap <S-left> vh
 nmap <S-right> vl
 
 " start select and mark first word
-imap <S-C-left> <ESC>vb
-imap <S-C-right> <ESC>vw
-nmap <S-C-left> vb
-nmap <S-C-right> vw
+imap <S-C-left> <ESC>vB
+imap <S-C-right> <ESC>vW
+nmap <S-C-left> vB
+nmap <S-C-right> vW
 
 " start select and mark first line
 imap <S-up> <ESC>vgk
@@ -639,8 +649,8 @@ nmap <S-C-down> v)
 " remap visual up/down keys to prevent unexpected behavior
 vnoremap <S-left> h
 vnoremap <S-right> l
-vnoremap <S-C-left> b
-vnoremap <S-C-right> w
+vnoremap <S-C-left> B
+vnoremap <S-C-right> W
 vnoremap <S-up> gk
 vnoremap <S-down> gj
 vnoremap <S-C-up> (
@@ -648,7 +658,8 @@ vnoremap <S-C-down> )
 vnoremap <C-up> (
 vnoremap <C-down> )
 
-map <A-left> <ESC>:NERDTreeToggle<CR>
+" Not using nerdtree anymore
+" map <A-left> <ESC>:NERDTreeToggle<CR>
 map <A-down> <ESC>:bn<CR>
 map <A-right> <ESC>:Tlist<CR>
 map <A-up> <ESC>:bp<CR>
