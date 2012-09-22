@@ -34,11 +34,6 @@
 	url = https://github.com/msanders/snipmate.vim.git
 	ignore = dirty
 
-[submodule "bundle/xptemplate"]
-	path = .vim/bundle/xptemplate
-	url = https://github.com/drmingdrmer/xptemplate.git
-	ignore = dirty
-
 [submodule "bundle/shymenu"]
 	path = .vim/bundle/shymenu_vim
 	url = https://github.com/tomtom/shymenu_vim.git
@@ -69,4 +64,14 @@
 	path = .vim/bundle/mru
 	url  = https://github.com/vim-scripts/mru.vim.git
 
+[submodule "bundle/vim-indent-object"]
+	path = .vim/bundle/vim-indent-object
+	url  = https://github.com/michaeljsmith/vim-indent-object.git
 
+[submodule "bundle/vim-jade"]
+	path = .vim/bundle/vim-jade
+	url  = https://github.com/digitaltoad/vim-jade.git
+
+[submodule "bundle/vim-numbertoggle"]
+	path = .vim/bundle/vim-numbertoggle
+	url  = https://github.com/jeffkreeftmeijer/vim-numbertoggle.git
