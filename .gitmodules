@@ -14,11 +14,6 @@
 	url = https://github.com/tpope/vim-abolish.git
 	ignore = dirty   
 
-[submodule "bundle/nerdtree"]
-	path = .vim/bundle/nerdtree
-	url = https://github.com/scrooloose/nerdtree.git
-	ignore = dirty
-
 [submodule "bundle/vim-coffee-script"]
 	path = .vim/bundle/vim-coffee-script
 	url = https://github.com/kchmck/vim-coffee-script.git
@@ -52,17 +47,9 @@
 	path = .vim/bundle/lua
 	url = https://github.com/vim-scripts/lua.vim.git
 
-[submodule "bundle/minibufexpl"]
-	path = .vim/bundle/minibufexpl
-	url = https://github.com/fholgado/minibufexpl.vim.git
-
 [submodule "bundle/luainspect"]
 	path = .vim/bundle/luainspect
 	url  = https://github.com/xolox/vim-lua-inspect.git
-
-[submodule "bundle/mru"]
-	path = .vim/bundle/mru
-	url  = https://github.com/vim-scripts/mru.vim.git
 
 [submodule "bundle/vim-indent-object"]
 	path = .vim/bundle/vim-indent-object
