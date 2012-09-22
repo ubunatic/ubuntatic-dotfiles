@@ -44,11 +44,6 @@
 	url = https://github.com/tomtom/shymenu_vim.git
 	ignore = dirty
 
-[submodule "bundle/coffeescript-snips"]
-	path = .vim/bundle/coffeescript-snips
-	url = https://github.com/carlosvillu/coffeScript-VIM-Snippets.git
-	ignore = dirty 
-
 [submodule "bundle/vim-fugitive"]
 	path = .vim/bundle/vim-fugitive
 	url = https://github.com/tpope/vim-fugitive.git
