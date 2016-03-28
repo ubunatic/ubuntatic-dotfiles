@@ -1,11 +1,6 @@
-Copyright (c) 2011 Uwe Jugel, Licensed under the MIT license (see LICENSE file)
-
 Juve's dotfiles
 ===============
 
-This projects contains some dotfiles for VIM and Gedit.
-It includes some stuff for easier use of JavaScript and CoffeeScript.
+This projects contains my dotfiles. Feel free to copy or use my scripts for your own customization
 
-Feel free to copy/use my scripts for your own customization
-
-
+Copyright (c) 2011-2016 Uwe Jugel, Licensed under the MIT license (see LICENSE file)
