@@ -8,16 +8,18 @@
 # for ssh logins, install and configure the libpam-umask package.
 #umask 022
 
-alias warn="cat 1>&2 <<<"
+alias epoch="date +%s"
+alias epoch-ms="date +%s%3N"
+alias epoch-nano="date +%s%N"
 
-isBash()         { test -n "$BASH_VERSION"     }
-isZsh()          { test -n "$ZSH_VERSION";     }
-isEmpty()        { test -z "$@";               }
-isFile()         { test -f "$@";               }
-isDir()          { test -d "$@";               }
-canTouch()       { touch -c "$@" 2> /dev/null; }
+alias isBash='test -n "$BASH_VERSION"'
+alias isZsh='test -n "$ZSH_VERSION"'
 
-export_gopath() { export GOPATH="$@" && warn "GOPATH set to '$@'"; }
+warn()      { echo $@  1>&2;              }
+isEmpty()   { test  -z "$@";              }
+isFile()    { test  -f "$@";              }
+isDir()     { test  -d "$@";              }
+canTouch()  { touch -c "$@" 2> /dev/null; }
 
 checkPATH()  {
 	dir=`cd "$@" 2> /dev/null && pwd` &&              # try to access the dir
@@ -25,9 +27,12 @@ checkPATH()  {
 	echo "$dir"                                       # print if found and not in PATH
 }
 
+setGOPATH() { p=`cd "$@" && pwd` && export GOPATH="$p"   && warn "GOPATH is now '$GOPATH'"; }
+addPATH()   { p=`checkPATH $@` && export PATH="$PATH:$p" && warn "PATH is now '$PATH'";     }
+
 isBash &&                                            # if running bash
-test -f "$HOME/.bashrc" &&                           # and .bashrc exists
-source "$HOME/.bashrc"                               # source it!
+isFile $HOME/.bashrc &&                              # and .bashrc exists
+source $HOME/.bashrc                                 # source it!
 
 for p in $HOME /usr/local /usr / /usr/local/games /usr/local/go; do
 	p1=`checkPATH $p/bin`                             # check and fix bin subdirs,
