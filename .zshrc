@@ -1,5 +1,5 @@
 # Path to your oh-my-zsh installation.
-export ZSH=/home/juve/.oh-my-zsh
+export ZSH=$HOME/.oh-my-zsh
 
 # Set name of the theme to load.
 # Look in ~/.oh-my-zsh/themes/
@@ -55,11 +55,10 @@ web-search z zsh-navigation-tools zsh_reload)
 
 # User configuration
 
-export GOPATH=$HOME/dev
-
-export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/local/go/bin:$GOPATH/bin:$HOME/bin"
-
 # export MANPATH="/usr/local/man:$MANPATH"
+
+# Always reload my profile (assuming your carefully crafted .profile does not bloat your environment)
+test -f $HOME/.profile && source $HOME/.profile
 
 source $ZSH/oh-my-zsh.sh
 
@@ -88,6 +87,5 @@ source $ZSH/oh-my-zsh.sh
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
-alias run=./run.sh
-alias res="./run.sh restart"
-alias cmd="./run.sh cmd"
+export LAST_ZSHRC_SOURCE_TIME=`date`
+
