@@ -13,7 +13,7 @@ Plugin 'scrooloose/nerdTree'
 Plugin 'Xuyuanp/nerdtree-git-plugin'
 Plugin 'sheerun/vim-polyglot'
 Plugin 'moll/vim-bbye'
-Plugin 'ubunatic/colorizer'
+" Plugin 'ubunatic/colorizer'
 Plugin 'tpope/vim-surround'
 
 call vundle#end()            " required
