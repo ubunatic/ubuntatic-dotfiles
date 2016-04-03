@@ -1,18 +1,4 @@
-colorscheme desert
-
-" repen current fold after saving go file
-" since goformat destroys folds on write 
-autocmd BufWritePost *.go normal! zv
-
-highlight Pmenu guibg=black
-
-if exists($HOME."/.vim/backup")
-	call mkdir($HOME."/.vim/backup", "p")
-endif
-
-if exists($HOME."/.vim/tmp")
-	call mkdir($HOME."/.vim/tmp", "p")
-endif
+" === Plugins ===
 
 set nocompatible
 filetype off
@@ -27,9 +13,59 @@ Plugin 'scrooloose/nerdTree'
 Plugin 'Xuyuanp/nerdtree-git-plugin'
 Plugin 'sheerun/vim-polyglot'
 Plugin 'moll/vim-bbye'
+Plugin 'ubunatic/colorizer'
+Plugin 'tpope/vim-surround'
 
-let mapleader = ","
+call vundle#end()            " required
+filetype plugin indent on    " required
 
+
+
+" === Colors ===
+
+colorscheme desert
+set background=dark
+
+if has("autocmd")
+	highlight Pmenu guifg='Black' guibg='White'
+	highlight PmenuSel guifg='Black' guibg='Gray'
+	highlight Search guibg='Purple' guifg='NONE'
+endif
+
+
+
+" === Window Sizing ===
+if has("gui")
+	" only fiddle with lines and cols if window is very small
+	" this basically overrides too small default window sizes
+	" but ignores larger settings caused by window resizing
+	if &lines < 30
+		set lines=40
+	endif
+	if &columns < 100
+		set columns=120
+	endif
+endif
+
+
+
+" === File Handling ===
+
+if exists($HOME."/.vim/backup")
+	call mkdir($HOME."/.vim/backup", "p")
+endif
+
+if exists($HOME."/.vim/tmp")
+	call mkdir($HOME."/.vim/tmp", "p")
+endif
+
+" avoid messing up source folders with backup files
+set backupdir=$HOME/.vim/backup  " store backups centrally
+set directory=$HOME/.vim/tmp     " store swaps centrally
+
+
+
+" === Plugin Configuration ===
 " use goimports for formatting
 let g:go_fmt_command = "goimports"
 
@@ -40,8 +76,16 @@ let g:go_highlight_structs   = 1
 let g:go_highlight_operators = 1
 let g:go_highlight_build_constraints = 1
 
+let g:colorizer_maxlines = 1000
+
 " NERDTree options
 let g:NERDTreeShowHidden = 1
+
+
+
+" === Leader/Plugin Mappings ===
+
+let mapleader = ","
 
 nmap <F8> :TagbarToggle<CR>
 
@@ -54,8 +98,13 @@ map <leader>z  :set spell!<CR>
 " When pressing <leader>cd switch to the directory of the open buffer
 map <leader>cd :cd %:p:h<cr>
 
-call vundle#end()            " required
-filetype plugin indent on    " required
+
+
+" === Auto Groups ===
+
+" repen current fold after saving go file
+" since goformat destroys folds on write 
+autocmd BufWritePost *.go normal! zv
 
 " augroup filetypedetect
 "   au! BufRead,BufNewFile *.cql setfiletype sql
@@ -67,12 +116,12 @@ else
 	set backup      " keep a backup file
 endif
 
-" avoid messing up source folders with backup files
-set backupdir=$HOME/.vim/backup  " store backups centrally
-set directory=$HOME/.vim/tmp     " store swaps centrally
+" ...
 
 
-" basics
+
+" === Common Variables ===
+
 set history=1000      " keep 1000 lines of command line history
 set undolevels=1000   " keep 1000 undolevels
 set ruler             " show the cursor position all the time
@@ -130,6 +179,15 @@ set hidden            " allow buffer switches from unsaved files.
 set wrap              " enable "visual" wrapping
 set textwidth=0       " turn off physical line wrapping
 set wrapmargin=0      " turn off physical line wrapping
+
+
+
+" === Key Mappings ===
+
+map  <C-f> :promptfind<CR>
+map  <C-h> :promptrepl<CR>
+vmap <C-f> y/<C-R>"<CR>N:promptfind<CR>
+vmap <C-h> y/<C-R>"<CR>N:promptrepl<CR>
 
 " fold/unfold + toggle folding
 nnoremap <space> za
@@ -286,6 +344,3 @@ map! Ö {
 map! ä ]
 map! Ä }
 
-" auto groups
-
-" ...
