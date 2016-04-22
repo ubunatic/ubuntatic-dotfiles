@@ -9,15 +9,72 @@ Plugin 'VundleVim/Vundle.vim'
 Plugin 'fatih/vim-go'
 Plugin 'Valloric/YouCompleteMe'
 Plugin 'Tagbar'
+Plugin 'SyntaxRange'
 Plugin 'scrooloose/nerdTree'
 Plugin 'Xuyuanp/nerdtree-git-plugin'
 Plugin 'sheerun/vim-polyglot'
 Plugin 'moll/vim-bbye'
+" Plugin 'chrisbra/NrrwRgn'
 " Plugin 'ubunatic/colorizer'
 Plugin 'tpope/vim-surround'
+" Plugin 'godlygeek/tabular'
+" Plugin 'plasticboy/vim-markdown'
+Plugin 'tpope/vim-markdown'
+Plugin 'jtratner/vim-flavored-markdown'
 
 call vundle#end()            " required
 filetype plugin indent on    " required
+
+" === SyntaxRange Setup ===
+
+function! CommonSyntaxRanges() abort
+	for item in items({'SH':'sh', 'SQL':'sql', 'EOF':'sh', 'MD':'ghmarkdown', 'AWK':'awk', 'RUBY':'ruby', 'RB':'ruby'})
+		call SyntaxRange#Include('<<[\-]\=' . item[0] . '$', item[0], item[1],  'NonText')
+	endfor
+
+	call SyntaxRange#Include("awk\ [^|']*'\ ",                 "\ '",         'awk',  'NonText')
+	call SyntaxRange#Include("awk\ [^|']*'$",                  "^[\t\ ]*'",   'awk',  'NonText')
+	call SyntaxRange#Include('[a-z]*sql[a-z]*\ \"',            '\"$', 'sql',  'NonText')
+	call SyntaxRange#Include('[a-z]*sql[a-z]*.*\ \(-c\)\ \"',  '\"$', 'sql',  'NonText')
+
+endfunction
+
+function! _blockcomment()
+
+	" free text comment
+	You can write free text here,
+	but vim will try to highlight it as vimscript!
+	
+	" markdown heredoc
+	test <<MD
+	### Nevertheless ###
+	* for testing my fuzzy SyntaxRange heredocs
+	* having no leading chars is essential
+	* and the blockcomment function does the trick
+	MD
+
+	" psql one-liner
+	psql -c " SELECT 1 "
+
+	" psql heredoc
+	psql <<SQL
+		SELECT 1
+	SQL
+
+	" psql indented heredoc
+	psql <<-SQL
+		SELECT 1
+	SQL
+
+   " awk one-liner
+	awk ' /test/ {print $1} '
+
+	" shell heredoc
+	zsh <<-SH
+		if true; then false; else break; fi
+	SH
+
+endfunction
 
 
 
@@ -27,9 +84,25 @@ colorscheme desert
 set background=dark
 
 if has("autocmd")
-	highlight Pmenu guifg='Black' guibg='White'
-	highlight PmenuSel guifg='Black' guibg='Gray'
-	highlight Search guibg='Purple' guifg='NONE'
+	"wrap auto command in group
+	augroup vimrc
+
+		"clear all commands in this group
+		au!
+
+		highlight Pmenu guifg='Black' guibg='White'
+		highlight PmenuSel guifg='Black' guibg='Gray'
+		highlight Search guibg='Purple' guifg='NONE'
+		autocmd Syntax * call CommonSyntaxRanges()
+		autocmd BufWritePost .vimrc source ~/.vimrc
+
+	augroup END
+
+	augroup markdown
+    au!
+    au BufNewFile,BufRead *.md,*.markdown,*.txt setlocal filetype=ghmarkdown
+	augroup END
+
 endif
 
 
@@ -93,6 +166,8 @@ map <leader>ev :e ~/.vimrc<CR>
 map <leader>ez :e ~/.zshrc<CR>
 map <leader>eb :e ~/.bashrc<CR>
 map <leader>ep :e ~/.profile<CR>
+map <leader>et :e ~/.tmux.conf<CR>
+map <leader>eh :e ~/.hosts<CR>
 map <leader>z  :set spell!<CR>
 
 " When pressing <leader>cd switch to the directory of the open buffer
@@ -156,6 +231,7 @@ set cpoptions-=$      " do not indicate change ranges with a $-sign
 set virtualedit=insert,block " ,onemore " allow moving in non-text areas
 set wildmenu          " show completion for menu entries, :*TAB
 set mousehide         " hide mouse when typing, move it to show again
+set mouse=a           " allow mouse selection in all modes (incl. non-gui)
 set report=0          " always report if a command changes some lines
 set laststatus=2      " always keep a status line for the last window
 set shellslash        " do not convert backslash path chars to forward slashes ATTENTION:(luac may need noshellslash)

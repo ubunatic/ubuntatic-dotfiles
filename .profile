@@ -1,19 +1,15 @@
-# ~/.profile: executed by the command interpreter for login shells.
-# This file is not read by bash(1), if ~/.bash_profile or ~/.bash_login
-# exists.
-# see /usr/share/doc/bash/examples/startup-files for examples.
-# the files are located in the bash-doc package.
+#
+# Author: Uwe Jugel, uwe.jugel@gmail.com
+#
+# source this file from your custom .profile
+# to setup the main PATHs and add a few utils
 
-# the default umask is set in /etc/profile; for setting the umask
-# for ssh logins, install and configure the libpam-umask package.
-#umask 022
+epoch()      { date +%s;    }
+epoch-ms()   { date +%s%3N; }
+epoch-nano() { date +%s%N;  }
 
-alias epoch="date +%s"
-alias epoch-ms="date +%s%3N"
-alias epoch-nano="date +%s%N"
-
-alias isBash='test -n "$BASH_VERSION"'
-alias isZsh='test -n "$ZSH_VERSION"'
+isBash()    { test -n "$BASH_VERSION"; }
+isZsh()     { test -n "$ZSH_VERSION";  }
 
 warn()      { echo $@  1>&2;              }
 isEmpty()   { test  -z "$@";              }
@@ -45,12 +41,8 @@ for p in $HOME /usr/local /usr / /usr/local/games /usr/local/go; do
 	test -d "$p" && export PATH="$p:$PATH"            # add basedir itself
 done
 
-test -z "$GOPATH" && mkdir $HOME/dev &&
-export GOPATH=$HOME/dev
-
-alias run=./run.sh
-alias res="./run.sh restart"
-alias cmd="./run.sh cmd"
+test -f "$HOME/.hosts" && export HOSTALIASES="$HOME/.hosts" # setup host aliases
 
 export LAST_PROFILE_SOURCE_TIME=`date`
 
+# vim:ft=sh:
