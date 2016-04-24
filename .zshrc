@@ -1,3 +1,5 @@
+#DEBUG t_zshstart="`date +%s%3N`"
+
 # Path to your oh-my-zsh installation.
 export ZSH=$HOME/.oh-my-zsh
 
@@ -40,7 +42,7 @@ COMPLETION_WAITING_DOTS="true"
 # Uncomment the following line if you want to change the command execution time
 # stamp shown in the history command output.
 # The optional three formats: "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
-# HIST_STAMPS="mm/dd/yyyy"
+HIST_STAMPS="yyyy-mm-dd"
 
 # Would you like to use another custom folder than $ZSH/custom?
 # ZSH_CUSTOM=/path/to/new-custom-folder
@@ -49,16 +51,13 @@ COMPLETION_WAITING_DOTS="true"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git colorize colored-man-pages copydir copyfile cp dircycle \
-docker-compose docker go rsync sudo node npm urltools vagrant vim-interaction \
-web-search z zsh-navigation-tools zsh_reload)
+plugins=(git bower coffee colorize colored-man-pages compleat \
+copydir copyfile cp dircycle docker-compose docker go \
+rsync sudo node npm urltools vagrant vim-interaction \
+web-search z zsh-navigation-tools zsh_reload git-prompt \
+grunt npm node postgres sbt scala ubuntu)
 
 # User configuration
-
-# export MANPATH="/usr/local/man:$MANPATH"
-
-# Always reload my profile (assuming your carefully crafted .profile does not bloat your environment)
-test -f $HOME/.profile && source $HOME/.profile
 
 source $ZSH/oh-my-zsh.sh
 
@@ -87,5 +86,11 @@ source $ZSH/oh-my-zsh.sh
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
-export LAST_ZSHRC_SOURCE_TIME=`date`
+# Always reload my profile (assuming your carefully crafted .profile does not bloat your environment)
+test -f $HOME/.profile && source $HOME/.profile
 
+export MANPATH="/usr/local/man:$MANPATH"
+
+#DEBUG (( t_zshsource = `date +%s%3N` - t_zshstart ))
+#DEBUG export LAST_ZSHRC_SOURCE_DURATION="$t_zshsource ms"
+#DEBUG export LAST_ZSHRC_SOURCE_TIME="`date`"
