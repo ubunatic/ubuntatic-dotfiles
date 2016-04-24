@@ -169,7 +169,7 @@ for src in .vim/spell/*; do
 
 	else
 
-		if cp "$src" "$trg"
+		if mkdir -p "`dirname $trg`" && cp -u "$src" "$trg"
 		then (( files_created++ )); warn "spell file '$trg' copied";
 		else (( errors++ ));        warn "failed to copy spell file '$trg'";
 		fi
