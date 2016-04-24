@@ -188,7 +188,7 @@ ERRORS:         $errors
 EOF
 
 if (( errors == 0 ))
-then warn "INSTALLATION SUCCESSFUL"
-else fail "INSTALLATION FAILED"
+then echo "INSTALLATION SUCCESSFUL"; exit 0
+else echo "INSTALLATION FAILED"; exit 1
 fi
 
