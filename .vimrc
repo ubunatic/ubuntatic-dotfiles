@@ -5,22 +5,44 @@ filetype off
 set rtp+=~/.vim/bundle/Vundle.vim
 call vundle#begin()
 
+" common plugins, useful for all kinds of hosts
 Plugin 'VundleVim/Vundle.vim'
-Plugin 'fatih/vim-go'
-Plugin 'Valloric/YouCompleteMe'
 Plugin 'Tagbar'
 Plugin 'SyntaxRange'
 Plugin 'scrooloose/nerdTree'
-Plugin 'Xuyuanp/nerdtree-git-plugin'
 Plugin 'sheerun/vim-polyglot'
 Plugin 'moll/vim-bbye'
-" Plugin 'chrisbra/NrrwRgn'
-" Plugin 'ubunatic/colorizer'
 Plugin 'tpope/vim-surround'
-" Plugin 'godlygeek/tabular'
-" Plugin 'plasticboy/vim-markdown'
 Plugin 'tpope/vim-markdown'
 Plugin 'jtratner/vim-flavored-markdown'
+Plugin 'Xuyuanp/nerdtree-git-plugin'
+
+" Plugin 'chrisbra/NrrwRgn'
+" Plugin 'ubunatic/colorizer'
+" Plugin 'godlygeek/tabular'
+" Plugin 'plasticboy/vim-markdown'
+
+" === VIM Plugin Automation ===
+"
+if filereadable("~/.vimplugins")
+  source ~/.vimplugins
+endif
+"
+" create a file HOME/.vimplugins
+" then customize it to define host-specific plugins
+"
+"
+" automation examples:
+"
+" disable: sed -i "s/^[ ]*\(Plugin [ ]*'\(plug1\|plug2\|plug3\)'\)/\" \1/"
+" enable:  sed -i "s/^[ ]*\"[ ]*\(Plugin [ ]*'\(plug1\|plug2\|plug3\)'\)/\1/"
+"
+" in this file you should list plugins with complex dependecies that require
+" compilers to be installed or vim to be compiled with specific flags, e.g.:
+"
+" Plugin 'fatih/vim-go'
+" Plugin 'Valloric/YouCompleteMe'
+"
 
 call vundle#end()            " required
 filetype plugin indent on    " required

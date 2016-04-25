@@ -9,8 +9,9 @@ BASE_FILES=(
 .ctags
 )
 
-MORE_FILES=(
+COPY_FILES=(
 .profile
+.vimplugins
 )
 
 warn(){ echo $@ 1>&2; false;  }
@@ -41,15 +42,17 @@ usage() {
 
 	Options:
 
-		--all     create additional links
+		--all     create links for copy-once files
 		--force   overwrite existng links
-		--clean   like --force, but also removes backup files TRG_DIR/FILE[0-9~]+
+		--clean   removes backup files TRG_DIR/FILE[0-9~]+
 
 		--help    show this usage info
 		--debug   more logging
 
-	Created Links:    ${BASE_FILES[@]}
-	Additional Links: ${MORE_FILES[@]}
+	Files:
+
+		Main files are:      ${BASE_FILES[@]}.
+		Copy-once files are: ${COPY_FILES[@]}.
 
 	EOF
 }
@@ -74,8 +77,9 @@ test -z "$DEBUG" && DEBUG=false
 # parse options
 for opt in $@; do case $opt in
 	--help)  usage; exit 1;;
-	--all)   FILES=(${BASE_FILES[@]} ${MORE_FILES[@]});;
-	--clean) CLEAN=true; FORCE=true;;
+	--all)   FILES=(${BASE_FILES[@]} ${COPY_FILES[@]})
+		      COPY_FILES=();;
+	--clean) CLEAN=true;;
 	--force) FORCE=true;;
 	--debug) DEBUG=true;;
 	--diff)  DIFF=true;;
@@ -121,6 +125,16 @@ for src in ${FILES[@]}; do
 
 	if $DEBUG; then warn $trg*; warn; fi
 
+done
+
+# add customizable copy-once files
+for src in ${COPY_FILES[@]}; do
+	trg="$TRG_DIR/$src"
+	if file_exists $trg;
+	then (( files_skipped++ )); warn "preserving existing file '$trg'"
+	elif cp "$src" "$trg"
+	then (( files_created++ )); warn "copied file '$trg'"
+	fi
 done
 
 # add/update source script
