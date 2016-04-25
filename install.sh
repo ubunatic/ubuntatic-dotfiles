@@ -60,12 +60,14 @@ skipped=0
 updated=0
 files_updated=0
 files_created=0
+files_skipped=0
 
-SRC_DIR=`dirname $0` || fail "could not determine script dir"
+SRC_DIR=`readlink -f $(dirname "$0")` || fail "could not determine script dir"
 TRG_DIR="$HOME"
 
 FORCE=false
 CLEAN=false
+DIFF=false
 FILES=(${BASE_FILES[@]})
 test -z "$DEBUG" && DEBUG=false
 
@@ -76,6 +78,7 @@ for opt in $@; do case $opt in
 	--clean) CLEAN=true; FORCE=true;;
 	--force) FORCE=true;;
 	--debug) DEBUG=true;;
+	--diff)  DIFF=true;;
 	*)       ;;
 esac done
 
@@ -87,10 +90,10 @@ cd "$SRC_DIR"      || fail "cannot access source dir '$SRC_DIR'"
 
 warn "using target dir: $TRG_DIR"
 
-# create/update links
+# create/update links TODO: update only if required (check targets)
 for src in ${FILES[@]}; do
 	trg="$TRG_DIR/$src"
-	$DEBUG && warn "processing link: $trg -> $src"
+	$DEBUG && warn "processing link: $trg -> $SRC_DIR/$src"
 	if   ! file_exists $src; then
 
 		(( errors++ )); warn "source file '$src' not found"
@@ -102,16 +105,18 @@ for src in ${FILES[@]}; do
 		else (( errors++  )); warn "failed to create link '$trg'"
 		fi
 
-	else # src and trg exist
-
-		if $FORCE; then
+	else
+		rl_src="`readlink -f "$src"`"
+		rl_trg="`readlink -f "$trg"`"
+		if test "$rl_src" = "$rl_trg"
+		then (( skipped++ )); warn "link already up-to-date"
+		elif $FORCE; then
 			if update_link "$src" "$trg"
 			then (( updated++ )); warn "updated link '$trg'"; clean $trg
 			else (( errors++  )); warn "failed to update link '$trg'"
 			fi
 		else (( skipped++ )); warn "skipping existing link '$trg'";
 		fi
-
 	fi
 
 	if $DEBUG; then warn $trg*; warn; fi
@@ -126,9 +131,11 @@ source_script="source $TRG_DIR/.shellib/shellib.sh"
 source_line="$source_script $source_tag $source_msg"
 SED_OPTS="--follow-symlinks -i~"
 
-if grep -E "$source_tag" "$source_host" 1> /dev/null; then
+if line=`grep -E "$source_tag" "$source_host"`; then
 
-	if sed $SED_OPTS "s@.*$source_tag.*@$source_line@" "$source_host"
+	if test "$line" = "$source_line"
+	then source_status=skipped; warn "source script already up-to-date"
+	elif sed $SED_OPTS "s@.*$source_tag.*@$source_line@" "$source_host"
 	then source_status=updated; warn "updated source script in $source_host"; clean $source_host
 	else (( errors++ )); warn "failed to update source script in $source_host"
 	fi
@@ -153,18 +160,32 @@ fi
 # add spell files
 for src in .vim/spell/*; do
 	trg="$TRG_DIR/$src"
-	if file_exists "$trg" && cp "$trg" "$trg~"; then
-
-		warn -n "updating spell file '$trg' (backup,..."
-		if cat "$src" "$trg" | sort -u > "$trg".tmp; then
-			warn -ne "\b\b\b sorted, merged,..."
-			if mv "$trg".tmp "$trg"
-			then warn -e "\b\b\b saved)"; (( files_updated++ ))
-			else warn -e "\b\b\b ERROR)"; (( errors++ ))
-			fi
+	if file_exists "$trg"; then
+		if diff "$trg" "$src" > /dev/null
+		then (( files_skipped++ )); warn "$trg and $src are equal, skipping to merge"
 		else
-			warn -e "ERROR)"; (( errors++ ));
-			warn "spell file merge of '$trg' and '$trg\.tmp' failed"
+			warn -n "updating spell file '$trg' (..."
+
+			if cp "$trg" "$trg~" 
+			then warn -ne "\b\b\bbackup,..."
+			else warn -e  "ERROR)"; warn "failed to backup '$trg'"; continue
+			fi
+
+			if cat "$src" "$trg" | sort -u > "$src".tmp; then
+				warn -ne "\b\b\b sorted, merged,..."
+
+				if diff "$trg" "$src".tmp > /dev/null
+				then
+					warn -e "\b\b\b skipped)"; (( files_skipped++ )); rm "$src".tmp
+					warn "$trg and merge file are equal, skipping to merge"
+				elif mv "$src".tmp "$trg"
+				then warn -e "\b\b\b saved)"; (( files_updated++ ))
+				else warn -e "\b\b\b ERROR)"; (( errors++ ))
+				fi
+			else
+				warn -e "ERROR)"; (( errors++ ));
+				warn "spell file merge of '$trg' and '$trg\.tmp' failed"
+			fi
 		fi
 
 	else
@@ -177,18 +198,27 @@ for src in .vim/spell/*; do
 	fi
 done
 
-cat <<-EOF
+LOG_FILE=$SRC_DIR/install.log
+LOG_FILE_PREV=$SRC_DIR/install.log
+
+
+cat  <<-EOF
 LINKS_CREATED:  $created
 LINKS_UPDATED:  $updated
 LINKS_SKIPPED:  $skipped
 SOURCE_SCRIPT:  $source_status
 FILES_CREATED:  $files_created
 FILES_UPDATED:  $files_updated
+FILES_SKIPPED:  $files_skipped
 ERRORS:         $errors
 EOF
 
-if (( errors == 0 ))
-then echo "INSTALLATION SUCCESSFUL"; exit 0
-else echo "INSTALLATION FAILED"; exit 1
+if (( errors > 0 ))
+then echo "INSTALLATION FAILED";    exit 1
+elif (( created == 0       )) && (( updated == 0       )) &&
+	  (( files_created == 0 )) && (( files_updated == 0 )) &&
+	  test "$source_status" = "skipped"
+then echo "INSTALLATION SKIPPED";    exit 0
+else echo "INSTALLATION SUCCESSFUL"; exit 0
 fi
 
