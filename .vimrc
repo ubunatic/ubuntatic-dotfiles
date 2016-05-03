@@ -37,7 +37,7 @@ endif
 " disable: sed -i "s/^[ ]*\(Plugin [ ]*'\(plug1\|plug2\|plug3\)'\)/\" \1/"
 " enable:  sed -i "s/^[ ]*\"[ ]*\(Plugin [ ]*'\(plug1\|plug2\|plug3\)'\)/\1/"
 "
-" in this file you should list plugins with complex dependecies that require
+" in this file you should list plugins with complex dependencies that require
 " compilers to be installed or vim to be compiled with specific flags, e.g.:
 "
 " Plugin 'fatih/vim-go'
@@ -66,7 +66,7 @@ function! _blockcomment()
 	" free text comment
 	You can write free text here,
 	but vim will try to highlight it as vimscript!
-	
+
 	" markdown heredoc
 	test <<MD
 	### Nevertheless ###
@@ -180,6 +180,11 @@ let g:NERDTreeShowHidden = 1
 
 " === Leader/Plugin Mappings ===
 
+function! EchoToggle(setting)
+	exec 'set   '.a:setting.'!'
+	exec 'echo "'.a:setting.'=".&'.a:setting
+endfunction
+
 let mapleader = ","
 
 nmap <F8> :TagbarToggle<CR>
@@ -191,7 +196,6 @@ map <leader>ep :e ~/.profile<CR>
 map <leader>et :e ~/.tmux.conf<CR>
 map <leader>eh :e ~/.hosts<CR>
 map <leader>es :e ~/.ssh/config<CR>
-map <leader>z  :set spell!<CR>
 
 " When pressing <leader>cd switch to the directory of the open buffer
 map <leader>cd :cd %:p:h<cr>
@@ -200,8 +204,8 @@ map <leader>cd :cd %:p:h<cr>
 
 " === Auto Groups ===
 
-" repen current fold after saving go file
-" since goformat destroys folds on write 
+" reopen current fold after saving go file
+" since goformat destroys folds on write
 autocmd BufWritePost *.go normal! zv
 
 " augroup filetypedetect
@@ -221,7 +225,7 @@ endif
 " === Common Variables ===
 
 set history=1000      " keep 1000 lines of command line history
-set undolevels=1000   " keep 1000 undolevels
+set undolevels=1000   " keep 1000 undo levels
 set ruler             " show the cursor position all the time
 set showcmd           " display incomplete commands
 set noshowmatch       " display bracket matches
@@ -232,7 +236,7 @@ set tabstop=3         " change tab from 8 to 4
 set softtabstop=3     " allow fine grained soft tabs while keeping real tabs stable
 set shiftwidth=3      " set default shift width used for cindent, >>, and <<
 set foldcolumn=4      " always show left code folding column
-set foldnestmax=1     " max folding depth 
+set foldnestmax=1     " max folding depth
 set foldmethod=syntax " use space to fold/unfold code; use syntax or indent
 set foldminlines=8    " do not fold small blocks
 set novisualbell      " disable blinking terminals
@@ -304,11 +308,16 @@ map <C-S-Tab> <ESC>gT<CR>
 map <A-right> <ESC>:TagbarToggle<CR>
 
 " toggle editing aids
-nmap <ESC>s :set spell!<CR>
-nmap <ESC>w :set wrap!<CR>
-nmap <ESC>l :set list!<CR>
-nmap <ESC>n :set number!<CR>
-nmap <ESC>x :set nonumber<CR>:set nolist<CR>:set nowrap<CR>:set nospell<CR>
+nmap <leader>z :call EchoToggle('spell')<CR>
+nmap <leader>w :call EchoToggle('wrap')<CR>
+nmap <leader>l :call EchoToggle('list')<CR>
+nmap <leader>n :call EchoToggle('number')<CR>
+nmap <leader>x :set nonumber<CR>:set nolist<CR>:set nowrap<CR>:set nospell<CR>:echo "[n]umber, [w]rap, [l]ist, and [s]pell disabled"<CR>
+
+nnoremap zn ]s
+nnoremap zp [s
+nnoremap zb zw
+nnoremap zz zg]s
 
 " hide highlights
 nmap <ESC><space> :nohl<CR>
@@ -320,9 +329,6 @@ nmap <leader>ee :tabe %:p:h/<cfile><CR>
 " let g:browsefilter="All files\t*.*\n"
 nmap <leader>o :browse tabe<CR>
 
-map <leader>n :NERDTreeToggle<CR>
-map <A-left> :NERDTreeToggle<CR>
-
 " save file dialog mapped to <C-S-s>
 nnoremap <leader>s :browse saveas<CR>
 vnoremap <leader>s <ESC>:browse saveas<CR>gv
@@ -332,11 +338,15 @@ nnoremap <leader>q :Bdelete<CR>
 " manual buffer hack does not work!
 " nmap <leader>q :b#<bar>bd#<CR>
 
+" other leader mappings
+map <leader>n :NERDTreeToggle<CR>
+map <A-left>  :NERDTreeToggle<CR>
+
 " save using <C-s>
 nnoremap <C-s>  <ESC>:w<CR>
 vnoremap <C-s>  <ESC>:w<CR>gv
 noremap! <C-s>  <ESC>:w<CR>gi
-" test here in insertmode: 123
+" test here in insert mode: 123
 
 " map increase/decrease to new keys
 nnoremap <C-kPlus> <C-A>
@@ -361,7 +371,7 @@ vnoremap  <S-insert>    c<Middlemouse>
 " backspace deletes selection
 vmap <BS> d
 
-" del,backspace,S-insert start insert mode
+" del, backspace, S-insert start insert mode
 nnoremap <del> i<del>
 nnoremap <bs> i<bs>
 
@@ -420,7 +430,7 @@ vnoremap <S-tab> <gv
 " easy access to @
 map  <A-q> @
 imap <A-q> @
-" example usage: 
+" example usage:
 " 1. 'qq' to start recording in 'q'
 " 2. '@q' to playback recorded 'q'
 
