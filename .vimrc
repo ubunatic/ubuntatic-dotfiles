@@ -16,6 +16,7 @@ Plugin 'tpope/vim-surround'
 Plugin 'tpope/vim-markdown'
 Plugin 'jtratner/vim-flavored-markdown'
 Plugin 'Xuyuanp/nerdtree-git-plugin'
+Plugin 'ctrlpvim/ctrlp.vim'
 
 " Plugin 'chrisbra/NrrwRgn'
 " Plugin 'ubunatic/colorizer'
@@ -54,6 +55,7 @@ function! CommonSyntaxRanges() abort
 		call SyntaxRange#Include('<<[\-]\=' . item[0] . '$', item[0], item[1],  'NonText')
 	endfor
 
+	call SyntaxRange#Include("^[\t\ ]*shell:\ |$",             "^[\t\ ]*$",   'sh',   'NonText')
 	call SyntaxRange#Include("awk\ [^|']*'\ ",                 "\ '",         'awk',  'NonText')
 	call SyntaxRange#Include("awk\ [^|']*'$",                  "^[\t\ ]*'",   'awk',  'NonText')
 	call SyntaxRange#Include('[a-z]*sql[a-z]*\ \"',            '\"$', 'sql',  'NonText')
@@ -100,37 +102,52 @@ endfunction
 
 
 
+" === Backups ===
+
+if has("vms")
+	set nobackup    " do not keep a backup file, use versions instead
+else
+	set backup      " keep a backup file
+endif
+
+
+
 " === Colors ===
 
 colorscheme desert
 set background=dark
 
+
+
+" === Auto Groups ===
+
 if has("autocmd")
+
 	"wrap auto command in group
 	augroup vimrc
-
-		"clear all commands in this group
+		"clear all auto commands in this group
 		au!
-
 		highlight Pmenu guifg='Black' guibg='White'
 		highlight PmenuSel guifg='Black' guibg='Gray'
 		highlight Search guibg='Purple' guifg='NONE'
-		autocmd Syntax * call CommonSyntaxRanges()
-		autocmd BufWritePost .vimrc source ~/.vimrc
-
+		au Syntax * call CommonSyntaxRanges()
+		au BufWritePost .vimrc source ~/.vimrc
 	augroup END
 
-	augroup markdown
-    au!
-    au BufNewFile,BufRead *.md,*.markdown,*.txt setlocal filetype=ghmarkdown
+	augroup myfiletypes
+		au!
+		au BufRead,BufNewFile *.cql setfiletype sql
+		" reopen current fold after saving go file
+		" since goformat destroys folds on write
+		au BufWritePost *.go normal! zv
+		au BufNewFile,BufRead *.md,*.markdown,*.txt setlocal filetype=ghmarkdown
 	augroup END
 
 endif
 
-
-
-" === Window Sizing ===
+" === Window Sizing and Fonts ===
 if has("gui")
+	set guifont=Ubuntu\ Mono\ 12
 	" only fiddle with lines and cols if window is very small
 	" this basically overrides too small default window sizes
 	" but ignores larger settings caused by window resizing
@@ -181,8 +198,8 @@ let g:NERDTreeShowHidden = 1
 " === Leader/Plugin Mappings ===
 
 function! EchoToggle(setting)
-	exec 'set   '.a:setting.'!'
-	exec 'echo "'.a:setting.'=".&'.a:setting
+	exec 'set '.a:setting.'!'
+	exec 'set '.a:setting.'?'
 endfunction
 
 let mapleader = ","
@@ -201,24 +218,6 @@ map <leader>es :e ~/.ssh/config<CR>
 map <leader>cd :cd %:p:h<cr>
 
 
-
-" === Auto Groups ===
-
-" reopen current fold after saving go file
-" since goformat destroys folds on write
-autocmd BufWritePost *.go normal! zv
-
-" augroup filetypedetect
-"   au! BufRead,BufNewFile *.cql setfiletype sql
-" augroup END
-
-if has("vms")
-	set nobackup    " do not keep a backup file, use versions instead
-else
-	set backup      " keep a backup file
-endif
-
-" ...
 
 
 
@@ -339,7 +338,6 @@ nnoremap <leader>q :Bdelete<CR>
 " nmap <leader>q :b#<bar>bd#<CR>
 
 " other leader mappings
-map <leader>n :NERDTreeToggle<CR>
 map <A-left>  :NERDTreeToggle<CR>
 
 " save using <C-s>

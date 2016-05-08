@@ -652,3 +652,12 @@ ECDHE
 nodelay
 tracetype
 ttl
+reprovision
+devtools
+nodeexporter
+inventrory/!
+initctl
+jessie
+Vagrantfile
+switchover
+unregister
