@@ -29,8 +29,8 @@ Plugin 'ctrlpvim/ctrlp.vim'
 
 " === VIM Plugin Automation ===
 "
-if filereadable("~/.vimplugins")
-  source ~/.vimplugins
+if filereadable($HOME.'/.vimplugins')
+	source $HOME/.vimplugins
 endif
 "
 " create a file HOME/.vimplugins
@@ -152,6 +152,27 @@ if has("autocmd")
 		" since goformat destroys folds on write
 		au BufWritePost *.go normal! zv
 		au BufNewFile,BufRead *.md,*.markdown,*.txt setlocal filetype=ghmarkdown
+	augroup END
+
+	augroup go
+		au!
+		au FileType go nmap <leader>r <Plug>(go-run)
+		au FileType go nmap <leader>b <Plug>(go-build)
+		au FileType go nmap <leader>t <Plug>(go-test)
+		au FileType go nmap <leader>c <Plug>(go-coverage)
+
+		au FileType go nmap <Leader>ds <Plug>(go-def-split)
+		au FileType go nmap <Leader>dv <Plug>(go-def-vertical)
+		au FileType go nmap <Leader>dt <Plug>(go-def-tab)
+
+		au FileType go nmap <Leader>gd <Plug>(go-doc)
+		au FileType go nmap <Leader>gv <Plug>(go-doc-vertical)
+
+		au FileType go nmap <Leader>gb <Plug>(go-doc-browser)
+		au FileType go nmap <Leader>s <Plug>(go-implements)
+		au FileType go nmap <Leader>i <Plug>(go-info)
+		au FileType go nmap <Leader>e <Plug>(go-rename)
+
 	augroup END
 
 endif
