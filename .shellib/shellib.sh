@@ -13,7 +13,6 @@ source "$SL_DIR/sl_core.sh"
 
 __start
 
-SL_SOURCE_DIR=".shellib"
 __source .shellib/epoch.sh
 __source .shellib/path.sh
 

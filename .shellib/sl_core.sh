@@ -20,7 +20,7 @@ isBash()   { test -n "$BASH_VERSION"; }
 isZsh()    { test -n "$ZSH_VERSION";  }
 
 __sourcedir() {
-	if echo "$@" | grep "^$SL_SOURCE_DIR" > /dev/null
+	if echo "$@" | grep "^$SL_DIR" > /dev/null
 	then echo "$SL_DIR"; debug "SL_SOURCE_DIR: using SL_DIR"
 	else dirname "$@";   debug "SL_SOURCE_DIR: using 'dirname'"
 	fi
@@ -30,7 +30,7 @@ __source() {
 	if $SL_DEBUG
 	then
 		(( t_libstart = `date +%s%3N` ))
-		source `__sourcedir "@"`/`basename "$@"`
+		source `__sourcedir "$@"`/`basename "$@"`
 		(( t_libsource = `date +%s%3N` - t_libstart ))
 		debug "SL_SOURCE: '$1' $t_libsource (ms)"
 	else source $1

@@ -1,5 +1,8 @@
 " === Plugins ===
 
+mapclear
+mapclear!
+
 set nocompatible
 filetype off
 set rtp+=~/.vim/bundle/Vundle.vim
@@ -18,6 +21,7 @@ Plugin 'jtratner/vim-flavored-markdown'
 Plugin 'Xuyuanp/nerdtree-git-plugin'
 Plugin 'ctrlpvim/ctrlp.vim'
 
+" Plugin 'dhruvasagar/vim-table-mode'
 " Plugin 'chrisbra/NrrwRgn'
 " Plugin 'ubunatic/colorizer'
 " Plugin 'godlygeek/tabular'
@@ -146,8 +150,44 @@ if has("autocmd")
 endif
 
 " === Window Sizing and Fonts ===
+
 if has("gui")
-	set guifont=Ubuntu\ Mono\ 12
+	let g:myfontnum = 0
+	let g:myfonts   = [
+				\ 'Ubuntu\ Mono\ 11',
+				\ 'Ubuntu\ Mono\ 12',
+				\ 'Ubuntu\ Mono\ 13',
+				\ 'Ubuntu\ Mono\ 14',
+				\ 'Ubuntu\ Mono\ 15',
+				\ 'Ubuntu\ Mono\ 16',
+				\ 'Liberation\ Mono\ 10',
+				\ 'Liberation\ Mono\ 11',
+				\ 'Liberation\ Mono\ 12',
+				\ 'Liberation\ Mono\ 13',
+				\ 'Liberation\ Mono\ 14',
+				\ 'Liberation\ Mono\ 15',
+				\ 'DejaVu\ Sans\ Mono\ 10',
+				\ 'DejaVu\ Sans\ Mono\ 11',
+				\ 'DejaVu\ Sans\ Mono\ 12',
+				\ 'DejaVu\ Sans\ Mono\ 13',
+				\ 'DejaVu\ Sans\ Mono\ 14',
+				\ 'DejaVu\ Sans\ Mono\ 15'
+				\]
+	function! NextFont(...)
+		let g:myfontnum += 1
+		if a:0 > 0
+			let g:myfontnum = a:1
+		elseif g:myfontnum >= len(g:myfonts)
+			let g:myfontnum = 0
+		endif
+		let g:myfont = g:myfonts[g:myfontnum]
+		exec "set guifont=".g:myfont
+	endfunction
+
+	nmap <leader>f :call NextFont()<CR>
+	nmap <leader>- :call NextFont(g:myfontnum - 1)<CR>
+
+	call NextFont(1)
 	" only fiddle with lines and cols if window is very small
 	" this basically overrides too small default window sizes
 	" but ignores larger settings caused by window resizing
@@ -378,6 +418,33 @@ nnoremap <bs> i<bs>
 onoremap w iw
 vnoremap w iw
 
+" map umlauts to more useful chars
+map! ö [
+map! Ö {
+map! ä ]
+map! Ä }
+
+" TODO: How to make ü work in movements
+" Example:
+" try dfü here to delete this line | ...
+" Expexted Result:
+" | ...
+"
+" Char Codes:
+" Ä 196
+" Ö 214
+" Ü 220
+" ß 223
+" ä 228
+" ö 246
+" ü 252
+"
+" Failed Tests:
+" map! ü ...
+" map  Ü ...
+" onoremap <Char-252> ...
+"
+
 " mark lines
 map  <S-up>     v<up>
 vmap <S-up>      <up>
@@ -445,9 +512,4 @@ vnoremap <S-CR> <ESC>
 nnoremap d<S-Space> :%s#\s\+$##gc<CR>
 nnoremap d<Space> $a<space><Esc>diw$
 
-" add  braces and brackets to öäü
-map! ö [
-map! Ö {
-map! ä ]
-map! Ä }
 
