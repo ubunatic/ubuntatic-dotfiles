@@ -55,8 +55,9 @@ filetype plugin indent on    " required
 " === SyntaxRange Setup ===
 
 function! CommonSyntaxRanges() abort
+	let eof_end = '\($\| \)'
 	for item in items({'SH':'sh', 'SQL':'sql', 'EOF':'sh', 'MD':'ghmarkdown', 'AWK':'awk', 'RUBY':'ruby', 'RB':'ruby'})
-		call SyntaxRange#Include('<<[\-]\=' . item[0] . '$', item[0], item[1],  'NonText')
+		call SyntaxRange#Include('<<[\-]\=' . item[0] . eof_end, item[0], item[1],  'NonText')
 	endfor
 
 	call SyntaxRange#Include("^[\t\ ]*shell:\ |$",             "^[\t\ ]*$",   'sh',   'NonText')
@@ -101,6 +102,12 @@ function! _blockcomment()
 	zsh <<-SH
 		if true; then false; else break; fi
 	SH
+
+	cat <<EOF | sort -n
+		3
+		1
+		2
+	EOF
 
 endfunction
 
@@ -203,11 +210,11 @@ endif
 
 " === File Handling ===
 
-if exists($HOME."/.vim/backup")
+if ! isdirectory($HOME."/.vim/backup")
 	call mkdir($HOME."/.vim/backup", "p")
 endif
 
-if exists($HOME."/.vim/tmp")
+if ! isdirectory($HOME."/.vim/tmp")
 	call mkdir($HOME."/.vim/tmp", "p")
 endif
 
