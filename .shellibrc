@@ -1,3 +1,18 @@
+# Shellib resource file .shellibrc
+#
+# Setup Shellib behavior here!
+#
+# To use Shellib as library outside of $HOME directory
+# place and configure a copy of this file in your working directory
+#
 
-SL_REPLAY=off
+# set to true to monitor/debug loading process
+export SL_DEBUG=false
 
+# set to true for development or after upgrades
+export SL_RELOAD_PLUGINS=true
+
+# define the plugins you need (see .shellib/ for plugin names)
+export SL_PLUGINS="utils epoch path"
+
+# vim:ft=sh:
