@@ -5,6 +5,7 @@ BASE_FILES=(
 .tmux.conf
 .vimrc
 .zshrc
+.shellibrc
 .shellib
 .ctags
 )
@@ -51,8 +52,8 @@ usage() {
 
 	Files:
 
-		Main files are:      ${BASE_FILES[@]}.
-		Copy-once files are: ${COPY_FILES[@]}.
+		Main files are:      ${BASE_FILES[@]}
+		Copy-once files are: ${COPY_FILES[@]}
 
 	EOF
 }
@@ -94,7 +95,7 @@ cd "$SRC_DIR"      || fail "cannot access source dir '$SRC_DIR'"
 
 warn "using target dir: $TRG_DIR"
 
-# create/update links TODO: update only if required (check targets)
+# create/update links
 for src in ${FILES[@]}; do
 	trg="$TRG_DIR/$src"
 	$DEBUG && warn "processing link: $trg -> $SRC_DIR/$src"
@@ -215,7 +216,8 @@ done
 LOG_FILE=$SRC_DIR/install.log
 LOG_FILE_PREV=$SRC_DIR/install.log
 
-
+# print parsable install status
+# (can be be used for detecting changes, e.g., in Ansible)
 cat  <<-EOF
 LINKS_CREATED:  $created
 LINKS_UPDATED:  $updated
@@ -227,6 +229,7 @@ FILES_SKIPPED:  $files_skipped
 ERRORS:         $errors
 EOF
 
+# print parsable status summary
 if (( errors > 0 ))
 then echo "INSTALLATION FAILED";    exit 1
 elif (( created == 0       )) && (( updated == 0       )) &&

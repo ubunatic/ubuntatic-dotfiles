@@ -16,5 +16,5 @@ epoch(){
 	esac
 }
 
-$SL_LOAD_PLUGINS && isZsh && source $SL_DIR/omz-plugins/epoch.zsh
+isZsh && source $SL_DIR/omz-plugins/epoch.zsh
 

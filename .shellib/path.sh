@@ -1,4 +1,6 @@
+#
 # Author: Uwe Jugel, uwe.jugel@gmail.com
+#
 
 checkPATH() {
 	#dir=`cd "$@" 2> /dev/null && pwd` &&             # try to access the dir (disabled, too slow!)
@@ -7,7 +9,11 @@ checkPATH() {
 	echo "$dir"                                       # print if found and not in PATH
 }
 
-addPATH() {	p=`checkPATH $@` && export PATH="$PATH:$p" && warn "PATH is now '$PATH'"; }
+addPATH() {
+	if ! test -z "$@" &&	p=`checkPATH $@`
+	then export PATH="$PATH:$p"; warn "PATH is now '$PATH'"
+	fi
+}
 
 # golang support
 if which go > /dev/null
@@ -23,7 +29,7 @@ fi
 # for all dirs modify PATH only if dir exists and is not yet in PATH
 # (ensures replayability of the script)
 updatePaths(){
-	for d in ${PATH} $HOME/bin $HOME/sbin /bin /sbin /usr /usr/local /usr/local/games /usr/local/go; do
+	for d in /bin /sbin /usr /usr/local /usr/local/games /usr/local/go $HOME/bin $HOME/sbin; do
 		p1=`checkPATH $d/bin`                             # check and fix bin subdirs,
 		p2=`checkPATH $d/sbin`                            # sbin subdir,
 		p3=`checkPATH $d`                                 # and the base dir itself
