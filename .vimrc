@@ -13,14 +13,19 @@ Plugin 'VundleVim/Vundle.vim'
 Plugin 'Tagbar'
 Plugin 'SyntaxRange'
 Plugin 'scrooloose/nerdTree'
-Plugin 'sheerun/vim-polyglot'
 Plugin 'moll/vim-bbye'
 Plugin 'tpope/vim-surround'
 Plugin 'tpope/vim-markdown'
 Plugin 'jtratner/vim-flavored-markdown'
 Plugin 'Xuyuanp/nerdtree-git-plugin'
-Plugin 'ctrlpvim/ctrlp.vim'
+Plugin 'chriskempson/base16-vim'
 
+" let Vundle pull some non vim stuff
+Plugin 'chriskempson/base16-gnome-terminal'
+Plugin 'chriskempson/base16-shell'
+
+" Plugin 'sheerun/vim-polyglot'
+" Plugin 'ctrlpvim/ctrlp.vim'
 " Plugin 'dhruvasagar/vim-table-mode'
 " Plugin 'chrisbra/NrrwRgn'
 " Plugin 'ubunatic/colorizer'
@@ -51,6 +56,18 @@ endif
 
 call vundle#end()            " required
 filetype plugin indent on    " required
+
+
+" === Colors ===
+
+let base16colorspace=256
+set background=dark
+"colorscheme base16-eighties
+"colorscheme base16-railscasts
+"colorscheme base16-twilight
+"colorscheme base16-tomorrow
+colorscheme base16-default
+
 
 " === SyntaxRange Setup ===
 
@@ -123,12 +140,6 @@ endif
 
 
 
-" === Colors ===
-
-colorscheme desert
-set background=dark
-
-
 
 " === Auto Groups ===
 
@@ -154,24 +165,25 @@ if has("autocmd")
 		au BufNewFile,BufRead *.md,*.markdown,*.txt setlocal filetype=ghmarkdown
 	augroup END
 
-	augroup go
+	augroup vimgo
 		au!
-		au FileType go nmap <leader>r <Plug>(go-run)
+		au FileType go nmap <leader>x <Plug>(go-run)
 		au FileType go nmap <leader>b <Plug>(go-build)
 		au FileType go nmap <leader>t <Plug>(go-test)
 		au FileType go nmap <leader>c <Plug>(go-coverage)
 
-		au FileType go nmap <Leader>ds <Plug>(go-def-split)
-		au FileType go nmap <Leader>dv <Plug>(go-def-vertical)
-		au FileType go nmap <Leader>dt <Plug>(go-def-tab)
+		"au FileType go nmap <Leader>ds <Plug>(go-def-split)
+		"au FileType go nmap <Leader>dv <Plug>(go-def-vertical)
+		"au FileType go nmap <Leader>dt <Plug>(go-def-tab)
+		au FileType go nmap <Leader>d  <Plug>(go-def-split)
 
 		au FileType go nmap <Leader>gd <Plug>(go-doc)
 		au FileType go nmap <Leader>gv <Plug>(go-doc-vertical)
-
 		au FileType go nmap <Leader>gb <Plug>(go-doc-browser)
+
 		au FileType go nmap <Leader>s <Plug>(go-implements)
 		au FileType go nmap <Leader>i <Plug>(go-info)
-		au FileType go nmap <Leader>e <Plug>(go-rename)
+		au FileType go nmap <Leader>r <Plug>(go-rename)
 
 	augroup END
 
