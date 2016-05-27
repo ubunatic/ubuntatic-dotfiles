@@ -59,7 +59,10 @@ grunt npm node postgres sbt scala ubuntu)
 
 # User configuration
 
+
 source $ZSH/oh-my-zsh.sh
+
+unalias ag 2> /dev/null
 
 # You may need to manually set your language environment
 # export LANG=en_US.UTF-8
