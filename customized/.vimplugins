@@ -1,0 +1,25 @@
+
+" let $GOPATH = $HOME.'/.gopath:'.$HOME.'/git/backend/vendor:'.$HOME.'/git/backend'  
+
+Plugin 'fatih/vim-go'
+Plugin 'rking/ag.vim'
+Plugin 'Chun-Yang/vim-action-ag'
+Plugin 'Shougo/neocomplete'
+" Plugin 'Valloric/YouCompleteMe'
+
+" disable AutoComplPop
+let g:acp_enableAtStartup = 0
+" Use neocomplete
+let g:neocomplete#enable_at_startup = 1
+let g:neocomplete#enable_smart_case = 1
+
+" let g:ag_working_path_mode="r"
+" let g:ag_prg="/usr/bin/ag --vimgrep"
+
+" use * to search current word in normal mode
+nmap <leader>ff <Plug>AgActionWord
+" use * to search selected text in visual mode
+vmap <leader>ff <Plug>AgActionVisual
+
+" vim:ft=vim
+"
