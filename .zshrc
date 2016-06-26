@@ -62,6 +62,9 @@ grunt npm node postgres sbt scala ubuntu)
 
 source $ZSH/oh-my-zsh.sh
 
+# disable control flow via C-S and C-Q to let vim make use of these bindings
+stty -ixon
+
 unalias ag 2> /dev/null
 
 # You may need to manually set your language environment
