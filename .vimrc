@@ -8,19 +8,26 @@ filetype off
 set rtp+=~/.vim/bundle/Vundle.vim
 call vundle#begin()
 
+" let g:polyglot_disabled = ['go']
+
 " common plugins, useful for all kinds of hosts
 Plugin 'VundleVim/Vundle.vim'
-Plugin 'Tagbar'
+" Plugin 'sheerun/vim-polyglot'
+Plugin 'majutsushi/tagbar'
 Plugin 'SyntaxRange'
 Plugin 'scrooloose/nerdTree'
-Plugin 'sheerun/vim-polyglot'
 Plugin 'moll/vim-bbye'
 Plugin 'tpope/vim-surround'
 Plugin 'tpope/vim-markdown'
 Plugin 'jtratner/vim-flavored-markdown'
 Plugin 'Xuyuanp/nerdtree-git-plugin'
-Plugin 'ctrlpvim/ctrlp.vim'
+Plugin 'chriskempson/base16-vim'
 
+" let Vundle pull some non vim stuff
+" TODO: move to .dotfiles/install.sh
+Plugin 'chriskempson/base16-gnome-terminal'
+Plugin 'chriskempson/base16-shell'
+" Plugin 'ctrlpvim/ctrlp.vim'
 " Plugin 'dhruvasagar/vim-table-mode'
 " Plugin 'chrisbra/NrrwRgn'
 " Plugin 'ubunatic/colorizer'
@@ -51,6 +58,18 @@ endif
 
 call vundle#end()            " required
 filetype plugin indent on    " required
+
+
+" === Colors ===
+
+let base16colorspace=256
+set background=dark
+"colorscheme base16-eighties
+"colorscheme base16-railscasts
+"colorscheme base16-twilight
+"colorscheme base16-tomorrow
+colorscheme base16-default
+
 
 " === SyntaxRange Setup ===
 
@@ -123,12 +142,6 @@ endif
 
 
 
-" === Colors ===
-
-colorscheme desert
-set background=dark
-
-
 
 " === Auto Groups ===
 
@@ -142,7 +155,8 @@ if has("autocmd")
 		highlight PmenuSel guifg='Black' guibg='Gray'
 		highlight Search guibg='Purple' guifg='NONE'
 		au Syntax * call CommonSyntaxRanges()
-		au BufWritePost .vimrc source ~/.vimrc
+		au BufWritePost .vimrc      source ~/.vimrc
+		au BufWritePost .vimplugins source ~/.vimrc
 	augroup END
 
 	augroup myfiletypes
@@ -150,28 +164,37 @@ if has("autocmd")
 		au BufRead,BufNewFile *.cql setfiletype sql
 		" reopen current fold after saving go file
 		" since goformat destroys folds on write
-		au BufWritePost *.go normal! zv
 		au BufNewFile,BufRead *.md,*.markdown,*.txt setlocal filetype=ghmarkdown
 	augroup END
 
-	augroup go
+	augroup vimgo
 		au!
-		au FileType go nmap <leader>r <Plug>(go-run)
+		"au BufWritePost *.go normal! zv
+
+		au FileType go nmap <leader>x <Plug>(go-run)
 		au FileType go nmap <leader>b <Plug>(go-build)
 		au FileType go nmap <leader>t <Plug>(go-test)
 		au FileType go nmap <leader>c <Plug>(go-coverage)
 
-		au FileType go nmap <Leader>ds <Plug>(go-def-split)
-		au FileType go nmap <Leader>dv <Plug>(go-def-vertical)
-		au FileType go nmap <Leader>dt <Plug>(go-def-tab)
+		"au FileType go nmap <Leader>ds <Plug>(go-def-split)
+		"au FileType go nmap <Leader>dv <Plug>(go-def-vertical)
+		"au FileType go nmap <Leader>dt <Plug>(go-def-tab)
+		au FileType go nmap <Leader>d  <Plug>(go-def-split)
 
 		au FileType go nmap <Leader>gd <Plug>(go-doc)
 		au FileType go nmap <Leader>gv <Plug>(go-doc-vertical)
-
 		au FileType go nmap <Leader>gb <Plug>(go-doc-browser)
+
 		au FileType go nmap <Leader>s <Plug>(go-implements)
 		au FileType go nmap <Leader>i <Plug>(go-info)
-		au FileType go nmap <Leader>e <Plug>(go-rename)
+		au FileType go nmap <Leader>r <Plug>(go-rename)
+
+		let g:go_highlight_functions = 1
+		let g:go_highlight_methods = 1
+		let g:go_highlight_structs = 1
+		let g:go_highlight_interfaces = 1
+		let g:go_highlight_operators = 1
+		let g:go_highlight_build_constraints = 1
 
 	augroup END
 
@@ -304,7 +327,8 @@ set softtabstop=3     " allow fine grained soft tabs while keeping real tabs sta
 set shiftwidth=3      " set default shift width used for cindent, >>, and <<
 set foldcolumn=4      " always show left code folding column
 set foldnestmax=1     " max folding depth
-set foldmethod=syntax " use space to fold/unfold code; use syntax or indent
+set foldmethod=manual " use space to fold/unfold code; use syntax or indent
+set foldignore=       " do not ignore comments '#', just fold them!
 set foldminlines=8    " do not fold small blocks
 set novisualbell      " disable blinking terminals
 set noerrorbells      " disable any beeps
