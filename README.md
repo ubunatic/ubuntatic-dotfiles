@@ -17,7 +17,7 @@ Install symlinks to dotfiles and create copy-once files
     $ install.sh
 
 Copy-once files are currently `.profile` and `.vimplugins`. They are supposed to be heavily
-customized and different on each host, thus we do not want their changes to seen in git.
+customized and different on each host, thus we do not want their changes to be seen in git.
 
 Install and update links (creates backups as FILENAME~). Copy-once files are not updated.
 
@@ -37,7 +37,7 @@ is not a symlink pointing to the correct target. Be careful not to overwrite you
 Shellib
 =======
 
-The `shellib` library contains some utility functions and common profile setup.
+The `shellib` library contains some utility functions and common profile setups.
 It is installed by default to `.shellib` when running `install.sh`,
 which also adds a `source .shellib/shellib.sh` line to your `.profile`.
 

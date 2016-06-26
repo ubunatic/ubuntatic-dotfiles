@@ -350,9 +350,13 @@ set wrap              " enable "visual" wrapping
 set textwidth=0       " turn off physical line wrapping
 set wrapmargin=0      " turn off physical line wrapping
 
+set isfname-=:        " ignore colon after filenames
 
 
 " === Key Mappings ===
+
+noremap gv :vertical wincmd f<CR>
+noremap gs :wincmd f<CR>
 
 map  <C-f> :promptfind<CR>
 map  <C-h> :promptrepl<CR>

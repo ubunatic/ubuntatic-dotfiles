@@ -13,17 +13,17 @@ bench() {
 	$@
 	ret=$?
 	(( t_bench = `date +%s%3N` - t_start ))
-	warn "SL_BENCH:  '$@' $t_bench (ms)"
+	warn "SL_BENCH:  '$@' ${t_bench}ms"
 	return $ret
 }
 
 assert()   {
 	case $1 in
-		true)   shift;   (( $@ ))         || error "assert fail: '$@' not true"  ;;
-		false)  shift; ! (( $@ ))         || error "assert fail: '$@' not false" ;;
+		true)   shift;   expr $@          || error "assert fail: '$@' not true"  ;;
+		false)  shift; ! expr $@          || error "assert fail: '$@' not false" ;;
 		equals) shift; test "$1" = "$2"   || error "assert fail: '$1' != '$2'"   ;;
 		*)      error "assert fail: unknown assertion '$1' not in [true|false|equals]";;
-	esac
+	esac 1> /dev/null
 }
 
 test -f "$HOME/.hosts" && export HOSTALIASES="$HOME/.hosts" # setup host aliases
