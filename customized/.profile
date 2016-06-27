@@ -21,6 +21,8 @@ export GOPATH=$HOME/.gopath:$HOME/git/go #:$HOME/git/backend/vendor:$HOME/git/ba
 export PATH=$PATH:$HOME/.gopath/bin
 mkdir -p $GOPATH
 
+# find base16 installation either managed by Vundle in .vim
+# or managed manually in .config
 test -n "$BASE16_DIR" || BASE16_DIR=$HOME/.vim/bundle/base16-shell
 test -d "$BASE16_DIR" || BASE16_DIR=$HOME/.config/base16-shell
 

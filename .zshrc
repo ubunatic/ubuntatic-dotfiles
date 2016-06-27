@@ -52,15 +52,18 @@ HIST_STAMPS="yyyy-mm-dd"
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(git bower coffee colorize colored-man-pages compleat \
-copydir copyfile cp dircycle docker-compose docker go \
+copydir copyfile cp dircycle docker-compose docker go govendor\
 rsync sudo node npm urltools vagrant vim-interaction \
 web-search z zsh-navigation-tools zsh_reload git-prompt \
-grunt npm node postgres sbt scala ubuntu)
+grunt npm node postgres sbt scala ubuntu) 
 
 # User configuration
 
 
 source $ZSH/oh-my-zsh.sh
+
+# disable control flow via C-S and C-Q to let vim make use of these bindings
+stty -ixon
 
 unalias ag 2> /dev/null
 

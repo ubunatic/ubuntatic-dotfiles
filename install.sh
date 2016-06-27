@@ -46,6 +46,7 @@ usage() {
 		--all     create links for copy-once files
 		--force   overwrite existng links
 		--clean   removes backup files TRG_DIR/FILE[0-9~]+
+		--diff    show diff for updated or skipped files
 
 		--help    show this usage info
 		--debug   more logging
@@ -90,41 +91,41 @@ esac done
 UPDATE_OPT="-b"
 
 # access target and source dirs
-test -d "$TRG_DIR" || fail "TRG_DIR dir '$TRG_DIR' not found"
-cd "$SRC_DIR"      || fail "cannot access source dir '$SRC_DIR'"
+test -d "$TRG_DIR" || fail "TRG_DIR dir not found: $TRG_DIR"
+cd "$SRC_DIR"      || fail "cannot access source dir: $SRC_DIR"
 
 warn "using target dir: $TRG_DIR"
 
 # create/update links
 for src in ${FILES[@]}; do
-	trg="$TRG_DIR/$src"
-	$DEBUG && warn "processing link: $trg -> $SRC_DIR/$src"
+	lnk="$TRG_DIR/$src"
+	$DEBUG && warn "processing link: $lnk -> $SRC_DIR/$src"
 	if   ! file_exists $src; then
 
-		(( errors++ )); warn "source file '$src' not found"
+		(( errors++ )); warn "source file not found: $src"
 
-	elif ! target_exists $trg; then
+	elif ! target_exists $lnk; then
 
-		if create_link "$src" "$trg"
-		then (( created++ )); warn "created link '$trg'"; clean $trg
-		else (( errors++  )); warn "failed to create link '$trg'"
+		if create_link "$src" "$lnk"
+		then (( created++ )); warn "created link: $lnk"; clean $lnk
+		else (( errors++  )); warn "failed to create link: $lnk"
 		fi
 
 	else
 		rl_src="`readlink -f "$src"`"
-		rl_trg="`readlink -f "$trg"`"
-		if test "$rl_src" = "$rl_trg"
-		then (( skipped++ )); warn "link already up-to-date"
+		rl_lnk="`readlink -f "$lnk"`"
+		if test "$rl_src" = "$rl_lnk"
+		then (( skipped++ )); warn "link already up-to-date: $lnk -> $rl_src"
 		elif $FORCE; then
-			if update_link "$src" "$trg"
-			then (( updated++ )); warn "updated link '$trg'"; clean $trg
-			else (( errors++  )); warn "failed to update link '$trg'"
+			if update_link "$src" "$lnk"
+			then (( updated++ )); warn "updated link: $lnk"; clean $lnk
+			else (( errors++  )); warn "failed to update link: $lnk"
 			fi
-		else (( skipped++ )); warn "skipping existing link '$trg'";
+		else (( skipped++ )); warn "skipping existing link: $lnk";
 		fi
 	fi
 
-	if $DEBUG; then warn $trg*; warn; fi
+	if $DEBUG; then warn $lnk*; warn; fi
 
 done
 
@@ -132,9 +133,13 @@ done
 for src in ${COPY_FILES[@]}; do
 	trg="$TRG_DIR/$src"
 	if file_exists $trg;
-	then (( files_skipped++ )); warn "preserving existing file '$trg'"
+	then (( files_skipped++ )); warn "preserving existing file: $trg"
 	elif cp "$src" "$trg"
-	then (( files_created++ )); warn "copied file '$trg'"
+	then (( files_created++ )); warn "copied file: $trg"
+	fi
+	if $DIFF; then
+		warn "diff $src $trg"
+		diff $src "$trg" 1>&2
 	fi
 done
 
@@ -146,14 +151,15 @@ source_script="source $TRG_DIR/.shellib/shellib.sh"
 source_line="$source_script $source_tag $source_msg"
 SED_OPTS="--follow-symlinks -i~"
 
-if line=`grep -E "$source_tag" "$source_host"`; then
+if host_line=`grep -E "$source_tag" "$source_host"`; then
 
-	if test "$line" = "$source_line"
-	then source_status=skipped; warn "source script already up-to-date"
+	if test "$host_line" = "$source_line"
+	then source_status=skipped; warn "source script already up-to-date, found source line '$source_line' in $source_host"
 	elif sed $SED_OPTS "s@.*$source_tag.*@$source_line@" "$source_host"
-	then source_status=updated; warn "updated source script in $source_host"; clean $source_host
-	else (( errors++ )); warn "failed to update source script in $source_host"
+	then source_status=updated; warn "updated source script in profile: $source_host"; clean $source_host
+	else (( errors++ )); warn "failed to update source script in profile: $source_host"
 	fi
+
 
 elif grep -e "shellib.sh" "$source_host" 1> /dev/null; then
 
@@ -172,6 +178,16 @@ else
 	fi
 fi
 
+if $DIFF && ! test "$host_line" = "$source_line"
+then
+	cat 1>&2 <<-DIFF
+	diff of source lines
+	<$host_line
+	---
+	>$source_line
+	DIFF
+fi
+
 # add spell files
 for src in .vim/spell/*; do
 	trg="$TRG_DIR/$src"
@@ -179,11 +195,11 @@ for src in .vim/spell/*; do
 		if diff "$trg" "$src" > /dev/null
 		then (( files_skipped++ )); warn "$trg and $src are equal, skipping to merge"
 		else
-			warn -n "updating spell file '$trg' (..."
+			warn -n "updating spell file: $trg (..."
 
 			if cp "$trg" "$trg~" 
 			then warn -ne "\b\b\bbackup,..."
-			else warn -e  "ERROR)"; warn "failed to backup '$trg'"; continue
+			else warn -e  "ERROR)"; warn "failed to backup spell file: $trg"; continue
 			fi
 
 			if cat "$src" "$trg" | sort -u > "$src".tmp; then
@@ -199,17 +215,14 @@ for src in .vim/spell/*; do
 				fi
 			else
 				warn -e "ERROR)"; (( errors++ ));
-				warn "spell file merge of '$trg' and '$trg\.tmp' failed"
+				warn "spell file merge failed: $trg <- $trg\.tmp"
 			fi
 		fi
-
 	else
-
 		if mkdir -p "`dirname $trg`" && cp -u "$src" "$trg"
-		then (( files_created++ )); warn "spell file '$trg' copied";
-		else (( errors++ ));        warn "failed to copy spell file '$trg'";
+		then (( files_created++ )); warn "spell file copied: $src -> $trg";
+		else (( errors++ ));        warn "failed to copy spell file: $src -> $trg";
 		fi
-
 	fi
 done
 

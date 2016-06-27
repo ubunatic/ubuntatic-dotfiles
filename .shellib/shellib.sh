@@ -4,7 +4,7 @@
 
 
 # === Init Debug Vars ===
-if test -n "$DEBUG" && ! test "$DEBUG" = "false" || test "$SL_DEBUG" = "true"
+if test -n "$DEBUG"
 then SL_DEBUG=true
 else SL_DEBUG=false
 fi
@@ -26,18 +26,18 @@ test -f "$SL_RCFILE" && source "$SL_RCFILE"
 test -z "$SL_RELOAD_PLUGINS" && SL_RELOAD_PLUGINS=true
 
 # debug method from utils.sh (reqired before loading plugins)
-debug() { $SL_DEBUG && echo $@ 1>&2; true;  }
+debug() { $SL_DEBUG && echo $@ 1>&2; true; }
 
-# find shellib.sh
-for dir in "$SL_DIR" ".shellib" "$HOME/.shellib" \
-	/usr/local/lib/shellib /usr/lib/shellib /opt/shellib; do
+# find shellib.sh (in given SL_DIR, in relative script source dirs, or elsewhere)
+for dir in "$SL_DIR" `dirname "$0"` `dirname "$BASH_SOURCE"` . .shellib $HOME/.shellib \
+	/opt/shellib /usr/local/lib/shellib /usr/lib/shellib; do
 	if test -f "$dir/shellib.sh"
 	then SL_DIR="$dir"; debug "SL_MAIN: found shellib in '$dir'"; break
 	fi
 done
 
-isBash()   { test -n "$BASH_VERSION"; }
-isZsh()    { test -n "$ZSH_VERSION";  }
+isBash() { test -n "$BASH_VERSION"; }
+isZsh()  { test -n "$ZSH_VERSION";  }
 
 if $SL_DEBUG
 then
