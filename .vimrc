@@ -392,8 +392,9 @@ map <A-up>   <ESC>:bp<CR>
 map <A-down> <ESC>:bn<CR>
 
 " switch tabs
-map <C-Tab> <ESC>gt<CR>
-map <C-S-Tab> <ESC>gT<CR>
+" disabled for utilsnip plugin
+" map <C-Tab> <ESC>gt<CR>
+" map <C-S-Tab> <ESC>gT<CR>
 
 " show tag list
 map <A-right> <ESC>:TagbarToggle<CR>
@@ -439,63 +440,87 @@ noremap! <C-s>  <ESC>:w<CR>gi
 " test here in insert mode: 123
 
 " map increase/decrease to new keys
-nnoremap <C-kPlus> <C-A>
+nnoremap <C-kPlus>  <C-A>
 nnoremap <C-kMinus> <C-X>
 " try here: 1 2 3 095 01 010 100
 
 " cut using common shortcuts
 vnoremap  <S-del>       "+x
 vnoremap  <C-x>         "+x
-nnoremap  <S-del>       ^v$"+x
-nnoremap  <C-x>         ^v$"+x
+nnoremap  <S-del>       "+dd
+nnoremap  <C-x>         "+dd
 " copy using common shortcuts
 vnoremap  <C-c>         "+y
 vnoremap  <C-insert>    "+y
-nnoremap  <C-c>         ^v$"+y
-nnoremap  <C-insert>    ^v$"+y
+nnoremap  <C-c>         "+yy
+nnoremap  <C-insert>    "+yy
 " paste using common shortcuts
-nnoremap  <S-insert>    I<Middlemouse>
-inoremap  <S-insert>    <Middlemouse>
-vnoremap  <S-insert>    c<Middlemouse>
+nnoremap  <S-ins>       "+p
+inoremap  <S-ins>       <C-R><C-P>+
+vnoremap  <S-ins>       c<C-R><C-P>+
+cnoremap  <S-ins>       <C-R>+
 
-" backspace deletes selection
-vmap <BS> d
+" Note: do not use <C-v> for pasting, as it is used for typing chars and keys
+"       literally, independent of their binding (see examples below).
+" <C-v>ä      types: 'ä'
+" <C-v><C-v>  types: '^V'
+" <S-ins>     types: '<S-Insert>'
 
-" del, backspace, S-insert start insert mode
+" delete (without copying) using common shortcuts
+vnoremap <del> "_d
+
+" del and backspace start insert mode
+vnoremap <bs>  "_c
 nnoremap <del> i<del>
-nnoremap <bs> i<bs>
+nnoremap <bs>  i<bs>
 
 " work on whole words. changes the whole word and not only its tail
 " used for example with d, y, c, v, etc.
 onoremap w iw
 vnoremap w iw
 
-" map umlauts to more useful chars
+" map umlauts to more useful chars n insert mode
 map! ö [
 map! Ö {
 map! ä ]
 map! Ä }
+map! ü <bar>
+" also in normal mode
+map  ü <bar>
 
-" TODO: How to make ü work in movements
-" Example:
-" try dfü here to delete this line | ...
-" Expexted Result:
-" | ...
+" use ö and ä as { and } in normal/visual mode for paragraph movement
+noremap ö {
+noremap ä }
+noremap Ö {
+noremap Ä }
+noremap ü <bar>
+noremap Ü <bar>
+
+" allow umlauts in movements
+map fü f<bar>
+map fÜ f<bar>
+map fö f[
+map fÖ f{
+map fä f]
+map fÄ f}
+
+map rü r<bar>
+map rÜ r<bar>
+map rö r[
+map rÖ r{
+map rä r]
+map rÄ r}
+
+" TODO: How to make umlauts work in movements more generally
 "
-" Char Codes:
-" Ä 196
-" Ö 214
-" Ü 220
-" ß 223
-" ä 228
-" ö 246
-" ü 252
+" Test Case:       Try ^dfü here to delete this line | ...rest
+" Expexted Result: ...rest
 "
-" Failed Tests:
-" map! ü ...
-" map  Ü ...
-" onoremap <Char-252> ...
+" Char Codes: Ä 196  ä 228  ß 223 
+"             Ö 214  ö 246   
+"             Ü 220  ü 252   
 "
+" Failed Attempts: map ü <bar>, map Ü <bar>, map <Char-252> <bar>
 
 " mark lines
 map  <S-up>     v<up>

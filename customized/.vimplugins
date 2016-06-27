@@ -1,25 +1,71 @@
 
 " let $GOPATH = $HOME.'/.gopath:'.$HOME.'/git/backend/vendor:'.$HOME.'/git/backend'  
 
+" Plugin 'Shougo/neocomplete'
+" Plugin 'ervandew/supertab'
+Plugin 'SirVer/ultisnips'
+Plugin 'Valloric/YouCompleteMe'
+
 Plugin 'fatih/vim-go'
-Plugin 'rking/ag.vim'
-Plugin 'Chun-Yang/vim-action-ag'
-Plugin 'Shougo/neocomplete'
-" Plugin 'Valloric/YouCompleteMe'
+Plugin 'honza/vim-snippets'
+
+" let g:UltiSnipsExpandTrigger = "<nop>"
+" let g:ulti_expand_or_jump_res = 0
+" function! ExpandSnippetOrCarriageReturn()
+" 	 let snippet = UltiSnips#ExpandSnippetOrJump()
+" 	 if g:ulti_expand_or_jump_res > 0
+" 		  return snippet
+" 	 else
+" 		  return "\<CR>"
+" 	 endif
+" endfunction
+" inoremap <expr> <CR> pumvisible() ? "\<C-R>=ExpandSnippetOrCarriageReturn()\<CR>" : "\<CR>"
+
+
+
+" ymc keys
+" let g:ycm_key_list_select_completion = []
+" let g:ycm_key_list_previous_completion = []
+
+" make YCM compatible with UltiSnips (using supertab)
+" let g:ycm_key_list_select_completion   = [ '\<C-n>', '\<Down>', '\<C-Tab>'  ]
+" let g:ycm_key_list_previous_completion = [ '\<C-p>', '\<Up>',   '\<C-S-Tab>' ]
+" let g:SuperTabDefaultCompletionType = '\<C-Tab>'
+" let g:SuperTabDefaultCompletionType = '<C-n>'
+
+" better key bindings for UltiSnipsExpandTrigger
+" let g:UltiSnipsExpandTrigger = '<tab>'
+" let g:UltiSnipsJumpForwardTrigger = '<tab>"
+" let g:UltiSnipsJumpBackwardTrigger = '<s-tab>"
+" let g:UltiSnipsExpandTrigger='<c-tab>'
+" let g:UltiSnipsListSnippets= '<nop>'
+
+" let g:UltiSnipsJumpForwardTrigger='<c-tab>'
+" let g:UltiSnipsJumpBackwardTrigger='<c-s-tab>'
+
+" alternative option
+" let g:UltiSnipsJumpForwardTrigger = '<Right>'
+" let g:UltiSnipsJumpBackwardTrigger = '<Left>'
+" let g:SuperTabCrMapping = 0
+
+" Plugin 'garyburd/go-explorer'
 
 " disable AutoComplPop
-let g:acp_enableAtStartup = 0
+" let g:acp_enableAtStartup = 0
 " Use neocomplete
 let g:neocomplete#enable_at_startup = 1
 let g:neocomplete#enable_smart_case = 1
 
+" ag plugin
+" Plugin 'rking/ag.vim'
+" Plugin 'Chun-Yang/vim-action-ag'
 " let g:ag_working_path_mode="r"
 " let g:ag_prg="/usr/bin/ag --vimgrep"
 
 " use * to search current word in normal mode
-nmap <leader>ff <Plug>AgActionWord
+" nmap <leader>ff <Plug>AgActionWord
 " use * to search selected text in visual mode
-vmap <leader>ff <Plug>AgActionVisual
+" vmap <leader>ff <Plug>AgActionVisual
 
 " vim:ft=vim
 "
