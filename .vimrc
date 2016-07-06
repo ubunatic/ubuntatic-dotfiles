@@ -22,6 +22,7 @@ Plugin 'tpope/vim-markdown'
 Plugin 'jtratner/vim-flavored-markdown'
 Plugin 'Xuyuanp/nerdtree-git-plugin'
 Plugin 'chriskempson/base16-vim'
+Plugin 'jiangmiao/auto-pairs'
 
 " let Vundle pull some non vim stuff
 " TODO: move to .dotfiles/install.sh
@@ -68,7 +69,7 @@ set background=dark
 "colorscheme base16-railscasts
 "colorscheme base16-twilight
 "colorscheme base16-tomorrow
-colorscheme base16-default
+colorscheme base16-default-dark
 
 
 " === SyntaxRange Setup ===
