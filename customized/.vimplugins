@@ -9,6 +9,15 @@ Plugin 'Valloric/YouCompleteMe'
 Plugin 'fatih/vim-go'
 Plugin 'honza/vim-snippets'
 
+Plugin 'shawncplus/phpcomplete.vim'
+
+let g:phpcomplete_mappings = {
+\ 'jump_to_def':        '<leader>gd',
+\ 'jump_to_def_split':  '<leader>gs',
+\ 'jump_to_def_vsplit': '<leader>gv',
+\}
+
+
 " let g:UltiSnipsExpandTrigger = "<nop>"
 " let g:ulti_expand_or_jump_res = 0
 " function! ExpandSnippetOrCarriageReturn()

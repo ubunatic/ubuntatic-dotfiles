@@ -22,13 +22,13 @@ Plugin 'tpope/vim-markdown'
 Plugin 'jtratner/vim-flavored-markdown'
 Plugin 'Xuyuanp/nerdtree-git-plugin'
 Plugin 'chriskempson/base16-vim'
-Plugin 'jiangmiao/auto-pairs'
+" Plugin 'jiangmiao/auto-pairs' "does not handle dynamic reloads with my mappings
 
 " let Vundle pull some non vim stuff
 " TODO: move to .dotfiles/install.sh
 Plugin 'chriskempson/base16-gnome-terminal'
 Plugin 'chriskempson/base16-shell'
-" Plugin 'ctrlpvim/ctrlp.vim'
+Plugin 'ctrlpvim/ctrlp.vim'
 " Plugin 'dhruvasagar/vim-table-mode'
 " Plugin 'chrisbra/NrrwRgn'
 " Plugin 'ubunatic/colorizer'
@@ -285,10 +285,17 @@ let g:colorizer_maxlines = 1000
 " NERDTree options
 let g:NERDTreeShowHidden = 1
 
+" CtrlP options
+" TODO (uj): check why the ctrlp_map has no effect
+" workaround: directly define mappings in leader section
+" let g:ctrlp_map = ',p'
+" let g:ctrlp_cmd = 'CtrlP'
+" let g:ctrlp_prompt_mappings = {}
 
 
 " === Leader/Plugin Mappings ===
 
+" EchoToggle toggles the given setting and prints the resulting value.
 function! EchoToggle(setting)
 	exec 'set '.a:setting.'!'
 	exec 'set '.a:setting.'?'
@@ -305,13 +312,62 @@ map <leader>ep :e ~/.profile<CR>
 map <leader>et :e ~/.tmux.conf<CR>
 map <leader>eh :e ~/.hosts<CR>
 map <leader>es :e ~/.ssh/config<CR>
+map <leader>pf :CtrlP<CR>
+map <leader>pb :CtrlPBuffer<CR>
+map <leader>pp :CtrlPMixed<CR>
+map <leader>p  :CtrlPMixed<CR>
 
 " When pressing <leader>cd switch to the directory of the open buffer
 map <leader>cd :cd %:p:h<cr>
 
+" === Grep Mappings ===
 
+function! s:get_visual_selection()
+	" Why is this not a built-in Vim script function?!
+	" source: http://stackoverflow.com/questions/1533565/how-to-get-visually-selected-text-in-vimscript?rq=1
+	let [lnum1, col1] = getpos("'<")[1:2]
+	let [lnum2, col2] = getpos("'>")[1:2]
+	let lines = getline(lnum1, lnum2)
+	let lines[-1] = lines[-1][: col2 - (&selection == 'inclusive' ? 1 : 2)]
+	let lines[0] = lines[0][col1 - 1:]
+	return join(lines, "\n")
+endfunction
 
+function! MyGrep(...)
+	if a:0 == 1
+		if a:1 == 'n'
+			let text = expand("<cword>")
+		elseif a:1 == 'v'
+			let text = s:get_visual_selection()
+		else
+			let text = a:1
+		endif
+	elseif a:0 == 2
+		let text = a:2
+	else
+		echo "too many arguments"
+		return
+	endif
 
+	if text == ""
+		echo "nothing to grep"
+		return
+	endif
+
+	let name = "*."
+	let ext = expand("%:e")
+	if ext == ""
+		let name = expand("%:t")
+	endif
+	let file = name.ext
+	echo "searching for '".expand(text)."' **/".file
+	silent exec "lgrep! '".expand(text)."' **/".file
+	lopen
+	" TODO (uj): squelch errors
+endfunction
+
+map  <leader>gr :call MyGrep('n')<CR>
+vmap <leader>gr :call MyGrep('v')<CR>
 
 " === Common Variables ===
 
@@ -333,7 +389,6 @@ set foldignore=       " do not ignore comments '#', just fold them!
 set foldminlines=8    " do not fold small blocks
 set novisualbell      " disable blinking terminals
 set noerrorbells      " disable any beeps
-set nowrap            " do not wrap text
 set noexpandtab       " do not use spaces for tabs, real TABS rule!
 set linebreak         " smart brake if wrap is enabled
 set wrapmargin=1      " # of chars from RIGHT border where auto wrapping starts
@@ -371,7 +426,7 @@ set hidden            " allow buffer switches from unsaved files.
 " set switchbuf=        " respect open tabs when swtiching buffers,
                       " 'split' window before quickfix
 
-set wrap              " enable "visual" wrapping
+set nowrap            " disable 'visual' wrapping
 set textwidth=0       " turn off physical line wrapping
 set wrapmargin=0      " turn off physical line wrapping
 
