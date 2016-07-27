@@ -10,7 +10,7 @@ __epoch_complete() {
 	 'ns[display nanoseconds since epoch]'
   )
   if (( CURRENT == 2 )); then
-    # explain go commands
+    # explain epoch commands
     _values 'epoch commands' ${commands[@]}
     return
   fi

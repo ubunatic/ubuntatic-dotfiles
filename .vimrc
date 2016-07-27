@@ -317,8 +317,23 @@ map <leader>pb :CtrlPBuffer<CR>
 map <leader>pp :CtrlPMixed<CR>
 map <leader>p  :CtrlPMixed<CR>
 
+function! MyCD(...)
+	if a:0 == 0
+		let path = $PWD
+	else
+		let path = a:1
+	endif
+	echo "cd ".path
+	exec "cd ".path
+	if exists("*NERDTreeCWD")
+		call NERDTreeCWD()
+	endif
+endfunction
+command! -nargs=* CD :call MyCD(<f-args>)
+
 " When pressing <leader>cd switch to the directory of the open buffer
-map <leader>cd :cd %:p:h<cr>
+map <leader>cd  :call MyCD(expand("%:p:h"))<CR>
+map <leader>ncd :call MyCD()<CR>
 
 " === Grep Mappings ===
 

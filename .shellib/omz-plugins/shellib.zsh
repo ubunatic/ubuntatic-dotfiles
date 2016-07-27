@@ -19,7 +19,7 @@ __shellib_complete() {
 
 	if (( CURRENT == 2 )); then
 		# explain shellib commands
-		_values 'shellib command' ${commands[@]}
+		_values 'shellib commands' ${commands[@]}
 		return
 	fi
 }
