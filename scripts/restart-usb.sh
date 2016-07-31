@@ -1,9 +1,15 @@
 #!/bin/sh
 # restart-usb.sh looks for usb controllers and unbinds and binds them
 # at their correspondng /sys/bus/pci/drivers/*hci*/{bind,unbind} paths. 
-# The program helps to reactive broken usb devices like mice.
+# The program helps to reactive broken usb devices like mice that won't
+# work even after unplugging and replugging them.
 #
 # Autor: uwe.jugel@gmail.com
+#
+# Usage: 1. unplug misbehaving USB device
+#        2. run this script
+#        3. plugin your USB device
+#        4. the device should be workng again
 # 
 
 info() { echo $@ 1>&2; true;   }
