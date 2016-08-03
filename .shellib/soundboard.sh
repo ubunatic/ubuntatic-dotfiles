@@ -3,6 +3,12 @@
 alias urldecode='python -c "import sys, urllib as ul; print ul.unquote_plus(sys.argv[1])"'
 alias urlencode='python -c "import sys, urllib as ul; print ul.quote_plus(sys.argv[1])"'
 
+findsounds(){
+	cd $SOUNDBOARD_PATH
+	find | grep -i "$@" |  sed -e 's/^\.\///'
+	cd $cwd
+}
+
 soundboard() {
 	test -z "$SOUNDBOARD_CMD"    && SOUNDBOARD_CMD="curl"
 	test -z "$SOUNDBOARD_PREFIX" && SOUNDBOARD_PREFIX="localhost:8080/play/"
@@ -15,15 +21,15 @@ soundboard() {
 	elif test -d "$SOUNDBOARD_PATH"
 	then
 		debug "playing regex"
-		cd $SOUNDBOARD_PATH
-		file=`find | grep -i "$@" | head -n1`
-		cd $cwd
-	else 
+		file=`findsounds $@ | head -n 1`
+		warn "unmatched files:"
+		findsounds $@ | tail -n +2 | awk '{ print "   "$0}'
+		warn ""
+	else
 		error "SOUNDBOARD_PATH:$SOUNDBOARD_PATH not found"
 	fi
-	#file=`echo "$file" | sed 's/ /%20/g'`
 	file=`urlencode "$file"`
-	echo "$SOUNDBOARD_CMD $SOUNDBOARD_OPTS $SOUNDBOARD_PREFIX$file"
+	warn "$SOUNDBOARD_CMD $SOUNDBOARD_OPTS $SOUNDBOARD_PREFIX$file"
 	$SOUNDBOARD_CMD $SOUNDBOARD_OPTS "$SOUNDBOARD_PREFIX$file"
 }
 alias play='soundboard'
