@@ -4,15 +4,15 @@ alias urldecode='python -c "import sys, urllib as ul; print ul.unquote_plus(sys.
 alias urlencode='python -c "import sys, urllib as ul; print ul.quote_plus(sys.argv[1])"'
 
 findsounds(){
+	cwd=$PWD
 	cd $SOUNDBOARD_PATH
-	find | grep -i "$@" |  sed -e 's/^\.\///'
+	find -type f | grep -i "$@" | sed -e 's/^\.\///'
 	cd $cwd
 }
 
 soundboard() {
 	test -z "$SOUNDBOARD_CMD"    && SOUNDBOARD_CMD="curl"
 	test -z "$SOUNDBOARD_PREFIX" && SOUNDBOARD_PREFIX="localhost:8080/play/"
-	cwd=$PWD
 	debug "soundboard args: '$@'"
 	if echo "$@" | grep '\.\(mp3\|wav\|mp4\)$'
 	then
@@ -21,9 +21,10 @@ soundboard() {
 	elif test -d "$SOUNDBOARD_PATH"
 	then
 		debug "playing regex"
-		file=`findsounds $@ | head -n 1`
+		file=`findsounds "$@" | head -n 1`
+		warn "matched file: $file"
 		warn "unmatched files:"
-		findsounds $@ | tail -n +2 | awk '{ print "   "$0}'
+		findsounds "$@" | tail -n +2 | awk '{ print "   "$0}'
 		warn ""
 	else
 		error "SOUNDBOARD_PATH:$SOUNDBOARD_PATH not found"
