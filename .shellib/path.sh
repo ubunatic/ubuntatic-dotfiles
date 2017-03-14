@@ -12,16 +12,20 @@ checkPATH() {
 
 addPATH() {
 	if ! test -z "$@" &&	p=`checkPATH $@`
-	then export PATH="$PATH:$p"; warn "PATH is now '$PATH'"
+	then export PATH="$PATH:$p" #; warn "PATH is now '$PATH'" #disabled to avoid messages at desktop login
 	fi
 }
 
 # for all dirs modify PATH only if dir exists and is not yet in PATH
 # (ensures replayability of the script)
 updatePaths(){
-	for dir in /bin /sbin /usr/bin /usr/sbin \
-		/usr/local/bin /usr/local/sbin /usr/local/go/bin \
-		$HOME/bin $HOME/sbin; do
+	for dir in \
+		/bin             /sbin                \
+		/usr/bin         /usr/sbin            \
+		/usr/local/bin   /usr/local/sbin      \
+		$HOME/bin        $HOME/sbin           \
+		$HOME/.local/bin $HOME/.local/sbin
+	do
 		dir=`checkPATH $dir` && export PATH="$dir:$PATH" 
 	done
 }

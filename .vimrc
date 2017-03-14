@@ -18,8 +18,8 @@ Plugin 'SyntaxRange'
 Plugin 'scrooloose/nerdTree'
 Plugin 'moll/vim-bbye'
 Plugin 'tpope/vim-surround'
-Plugin 'tpope/vim-markdown'
-Plugin 'jtratner/vim-flavored-markdown'
+" Plugin 'tpope/vim-markdown'
+" Plugin 'jtratner/vim-flavored-markdown'
 Plugin 'Xuyuanp/nerdtree-git-plugin'
 Plugin 'chriskempson/base16-vim'
 " Plugin 'jiangmiao/auto-pairs' "does not handle dynamic reloads with my mappings
@@ -34,6 +34,23 @@ Plugin 'ctrlpvim/ctrlp.vim'
 " Plugin 'ubunatic/colorizer'
 " Plugin 'godlygeek/tabular'
 " Plugin 'plasticboy/vim-markdown'
+Plugin 'octol/vim-cpp-enhanced-highlight'
+Plugin 'rdnetto/YCM-Generator'
+Plugin 'vim-syntastic/syntastic'
+Plugin 'wincent/command-t'
+
+" Plugin 'LucHermitte/lh-vim-lib'
+" Plugin 'LucHermitte/lh-tags'
+" Plugin 'LucHermitte/lh-dev'
+" Plugin 'LucHermitte/lh-brackets'
+" 
+" Plugin 'LucHermitte/searchInRuntime'
+" Plugin 'LucHermitte/mu-template'
+" Plugin 'tomtom/stakeholders_vim'
+" Plugin 'LucHermitte/lh-cpp'
+" 
+" Plugin 'LucHermitte/vim-refactor'
+
 
 " === VIM Plugin Automation ===
 "
@@ -60,6 +77,17 @@ endif
 call vundle#end()            " required
 filetype plugin indent on    " required
 
+" === Syntastic ===
+set statusline+=%#warningmsg#
+set statusline+=%{SyntasticStatuslineFlag()}
+set statusline+=%*
+
+let g:syntastic_always_populate_loc_list = 0
+let g:syntastic_check_on_open = 1
+let g:syntastic_check_on_wq = 0
+let g:syntastic_auto_loc_list = 3   "0 no auto, 1 auto open, 2 auto close, 3 auto open leave open
+let g:syntastic_auto_jump = 1
+let g:syntastic_enable_highlighting = 1
 
 " === Colors ===
 
@@ -76,21 +104,34 @@ colorscheme base16-default-dark
 
 function! CommonSyntaxRanges() abort
 	let eof_end = '\($\| \)'
-	for item in items({'SH':'sh', 'SQL':'sql', 'EOF':'sh', 'MD':'ghmarkdown', 'AWK':'awk', 'RUBY':'ruby', 'RB':'ruby'})
+	for item in items({'SH':'sh', 'SQL':'sql', 'EOF':'sh', 'MD':'markdown', 'AWK':'awk', 'RUBY':'ruby', 'RB':'ruby', 'JS':'javascript', 'CO':'coffee', 'PY':'python'})
 		call SyntaxRange#Include('<<[\-]\=' . item[0] . eof_end, item[0], item[1],  'NonText')
 	endfor
 
+	" shell in yaml (ansible)
 	call SyntaxRange#Include("^[\t\ ]*shell:\ |$",             "^[\t\ ]*$",   'sh',   'NonText')
+
+	" awk, sql, js, coffee as single argument or as multi-line argument TODO: unify spec similar to heredoc cases
 	call SyntaxRange#Include("awk\ [^|']*'\ ",                 "\ '",         'awk',  'NonText')
 	call SyntaxRange#Include("awk\ [^|']*'$",                  "^[\t\ ]*'",   'awk',  'NonText')
+	
 	call SyntaxRange#Include('[a-z]*sql[a-z]*\ \"',            '\"$', 'sql',  'NonText')
 	call SyntaxRange#Include('[a-z]*sql[a-z]*.*\ \(-c\)\ \"',  '\"$', 'sql',  'NonText')
+
+	call SyntaxRange#Include("node\ -e\ '$",                   "^[\t\ ]*'",   'javascript',   'NonText')
+	call SyntaxRange#Include("node\ -e\ '\ ",                  "\ '",         'javascript',   'NonText')
+
+	call SyntaxRange#Include("coffee\ -e\ '$",                 "^[\t\ ]*'",   'coffee',   'NonText')
+	call SyntaxRange#Include("coffee\ -e\ '\ ",                "\ '",         'coffee',   'NonText')
+
+	call SyntaxRange#Include("python\ -c\ '$",                 "^[\t\ ]*'",   'python',   'NonText')
+	call SyntaxRange#Include("python\ -c\ '\ ",                "\ '",         'python',   'NonText')
 
 endfunction
 
 function! _blockcomment()
 
-	" free text comment
+	" this function is a vim block comment
 	You can write free text here,
 	but vim will try to highlight it as vimscript!
 
@@ -123,11 +164,24 @@ function! _blockcomment()
 		if true; then false; else break; fi
 	SH
 
-	cat <<EOF | sort -n
+	cat <<EOF | tac | sort -n
 		3
 		1
 		2
 	EOF
+
+	" js test
+	node <<JS
+	var o = { a:[1,"2",/3/,arguments,this,window], f:function(x){ return 2*x } }
+	JS
+	node -e ' var o = [1,"2",/3/] '
+
+	" coffee test
+	coffee <<CO
+	o = a:[1,"2",/3/,arguments,@,process], f:((x) -> 2*x), js:`var x = function(){return 1}`
+	CO
+	coffee -e ' o = [1,"2",/3/] '
+
 
 endfunction
 
@@ -165,7 +219,7 @@ if has("autocmd")
 		au BufRead,BufNewFile *.cql setfiletype sql
 		" reopen current fold after saving go file
 		" since goformat destroys folds on write
-		au BufNewFile,BufRead *.md,*.markdown,*.txt setlocal filetype=ghmarkdown
+		au BufNewFile,BufRead *.md,*.markdown,*.txt setlocal filetype=markdown
 	augroup END
 
 	augroup vimgo
@@ -348,43 +402,99 @@ function! s:get_visual_selection()
 	return join(lines, "\n")
 endfunction
 
-function! MyGrep(...)
-	if a:0 == 1
-		if a:1 == 'n'
-			let text = expand("<cword>")
-		elseif a:1 == 'v'
-			let text = s:get_visual_selection()
-		else
-			let text = a:1
-		endif
-	elseif a:0 == 2
-		let text = a:2
-	else
-		echo "too many arguments"
-		return
+function! MyGrepOptToPattern(pat)
+	if a:pat == 'c'
+		return expand('<cword>')
+	elseif a:pat == 'v'
+		return s:get_visual_selection()
+	elseif empty(MyGrepOptToNumber(a:pat))
+		return a:pat
 	endif
+	return ''
+endfunction
 
-	if text == ""
-		echo "nothing to grep"
-		return
+function! MyGrepOptToNumber(opt)
+	if match(a:opt,'^[1-9]$') >= 0
+		return a:opt
+	endif
+	return ''
+endfunction
+
+" MyGrep runs lgrep PATTERN **/*.TYPE with PATTERN.
+"
+" PATTERN is defined by
+"
+"   a) cword if 'c' in args,
+"   b) visual selection if 'v' in args,
+"   c) or for first valid search pattern in args.
+"
+" TYPE is defined by current file extension.
+"
+" If PATTERN is empty it is set to the current basename of the file.
+" MyGrep shows 1-9 matches per file if ^[1-9]$ in args
+" or else MyGrep shows all matches. It calls lopen at the end.
+function! MyGrep(...)
+	let num  = ''
+	let text = ''
+	for val in a:000
+		if empty(num)
+			let num  = MyGrepOptToNumber(val)
+		endif
+		if empty(text)
+			let text = MyGrepOptToPattern(val)
+		endif
+	endfor
+
+	if empty(text)
+		let text = expand('%:t')
 	endif
 
 	let name = "*."
-	let ext = expand("%:e")
-	if ext == ""
+	let ext = g:MyGrepExt
+	if empty(ext)
+		let ext = expand("%:e")
+	endif
+	if empty(ext)
 		let name = expand("%:t")
 	endif
 	let file = name.ext
+
+	if match(file, 'NERD_tree_[0-9]') >= 0
+		let file = "*"
+	endif
+		
 	echo "searching for '".expand(text)."' **/".file
-	silent exec "lgrep! '".expand(text)."' **/".file
+	silent exec "lgrep! ".g:MyGrepOptions." '".expand(text)."' **/".file
 	lopen
-	" TODO (uj): squelch errors
 endfunction
 
-map  <leader>gr :call MyGrep('n')<CR>
-vmap <leader>gr :call MyGrep('v')<CR>
+let g:MyGrepOptions='-s'
+let g:MyGrepExt='*'
 
-" === Common Variables ===
+map  <leader>gr :call MyGrep('','c')<CR>
+vmap <leader>gr :call MyGrep('','v')<CR>
+
+map  <leader>1gr :call MyGrep(1,'c')<CR>
+vmap <leader>1gr :call MyGrep(1,'v')<CR>
+
+" === Common Settings ===
+
+" --- Tabs ---
+set tabstop=3         " change tab from 8 to 4
+set softtabstop=3     " allow fine grained soft tabs while keeping real tabs stable
+set shiftwidth=3      " set default shift width used for cindent, >>, and <<
+set noexpandtab       " do not use spaces for tabs, real TABS rule!
+
+" -- Wrapping ---
+set linebreak         " smart brake if wrap is enabled
+set whichwrap+=b,s,<,>,[,] " let backspace and arrow keys move
+                           " to next/prev line in vis and normal mode
+set nowrap            " disable 'visual' wrapping
+set textwidth=0       " turn off physical line wrapping
+set wrapmargin=0      " # of chars from RIGHT border where auto wrapping starts 
+                      " 0 = turn off physical line wrapping
+set colorcolumn=110   " 
+highlight ColorColumn ctermbg=darkgray
 
 set history=1000      " keep 1000 lines of command line history
 set undolevels=1000   " keep 1000 undo levels
@@ -394,9 +504,6 @@ set noshowmatch       " display bracket matches
 set incsearch         " do incremental searching
 set hlsearch          " highlight search results
 set ignorecase        " ignore case
-set tabstop=3         " change tab from 8 to 4
-set softtabstop=3     " allow fine grained soft tabs while keeping real tabs stable
-set shiftwidth=3      " set default shift width used for cindent, >>, and <<
 set foldcolumn=4      " always show left code folding column
 set foldnestmax=1     " max folding depth
 set foldmethod=manual " use space to fold/unfold code; use syntax or indent
@@ -404,16 +511,11 @@ set foldignore=       " do not ignore comments '#', just fold them!
 set foldminlines=8    " do not fold small blocks
 set novisualbell      " disable blinking terminals
 set noerrorbells      " disable any beeps
-set noexpandtab       " do not use spaces for tabs, real TABS rule!
-set linebreak         " smart brake if wrap is enabled
-set wrapmargin=1      " # of chars from RIGHT border where auto wrapping starts
 set textwidth=0       " disable fixed text width
 set smartindent       " allow smart indenting
 set autoindent        " allow auto indenting (supported by smart indenting)
 set scrolloff=3       " keep n lines visible from current line
 set sidescrolloff=5   " keep m chars visible from current column
-set whichwrap+=b,s,<,>,[,] " let backspace and arrow keys move
-                           " to next/prev line in vis and normal mode
 set nolazyredraw      " Don't redraw while executing macros
 set encoding=utf-8    " force UTF-8 also for windows
 set cpoptions-=$      " do not indicate change ranges with a $-sign
@@ -440,11 +542,6 @@ set autoindent        " always set autoindenting on
 set hidden            " allow buffer switches from unsaved files.
 " set switchbuf=        " respect open tabs when swtiching buffers,
                       " 'split' window before quickfix
-
-set nowrap            " disable 'visual' wrapping
-set textwidth=0       " turn off physical line wrapping
-set wrapmargin=0      " turn off physical line wrapping
-
 set isfname-=:        " ignore colon after filenames
 
 
@@ -461,6 +558,9 @@ vmap <C-h> y/<C-R>"<CR>N:promptrepl<CR>
 " fold/unfold + toggle folding
 nnoremap <space> za
 nnoremap <C-space> zi
+
+" omin complete
+map! <C-space> <C-x><C-o>
 
 " switch buffers
 map <A-up>   <ESC>:bp<CR>
@@ -563,6 +663,10 @@ map! ü <bar>
 " also in normal mode
 map  ü <bar>
 
+" map German AltGr-I to |
+map! → <bar>
+map  → <bar>
+
 " use ö and ä as { and } in normal/visual mode for paragraph movement
 noremap ö {
 noremap ä }
@@ -598,45 +702,45 @@ map rÄ r}
 " Failed Attempts: map ü <bar>, map Ü <bar>, map <Char-252> <bar>
 
 " mark lines
-map  <S-up>     v<up>
-vmap <S-up>      <up>
-map! <S-up>     <ESC>v<up>
-map  <S-down>   v<down>
-vmap <S-down>    <down>
-map! <S-down>   <ESC><right>v<down>
-map  <S-home>   v<home>
-vmap <S-home>    <home>
-map! <S-home>   <ESC>v<home>
-map  <S-end>    v<end>
-vmap <S-end>     <end>
-map! <S-end>    <ESC><right>v<end>
+map  <S-up>               v<up>
+vmap <S-up>                <up>
+map! <S-up>          <ESC>v<up>
+map  <S-down>             v<down>
+vmap <S-down>              <down>
+map! <S-down> <ESC><right>v<down>
+map  <S-home>             v<home>
+vmap <S-home>              <home>
+map! <S-home>        <ESC>v<home>
+map  <S-end>              v<end>
+vmap <S-end>               <end>
+map! <S-end>  <ESC><right>v<end>
 " marks paragraphs
-map  <C-S-up>   v(
-vmap <C-S-up>    (
-map! <C-S-up>   <ESC>v(
-map  <C-S-down> v)
-vmap <C-S-down>  )
-map! <C-S-down> <ESC>v)
+map  <C-S-up>               v(
+vmap <C-S-up>                (
+map! <C-S-up>          <ESC>v(
+map  <C-S-down>             v)
+vmap <C-S-down>              )
+map! <C-S-down> <ESC><right>v)
 " mark chars
-map  <S-left>        v<left>
-vmap <S-left>         <left>
-map! <S-left>   <ESC>v<left>
-map  <S-right>              v<right>
-vmap <S-right>               <right>
-map! <S-right>  <ESC><right>v<right>
+map  <S-left>              v<left>
+vmap <S-left>               <left>
+map! <S-left>         <ESC>v<left>
+map  <S-right>             v<right>
+vmap <S-right>              <right>
+map! <S-right> <ESC><right>v<right>
 " mark words
-map  <C-S-left>   vB
-vmap <C-S-left>    B
-map! <C-S-left>   <ESC>vB
-map  <C-S-right>  vW
-vmap <C-S-right>   W
-map! <C-S-right>  <ESC><right>vW
+map  <C-S-left>              vb
+vmap <C-S-left>               b
+map! <C-S-left>         <ESC>vb
+map  <C-S-right>             ve
+vmap <C-S-right>              e
+map! <C-S-right> <ESC><right>ve
 
 " remap Ctrl+arrows to word/sentence selection
-noremap <C-left> B
-noremap <C-right> W
-noremap <C-up> (
-noremap <C-down> )
+noremap <C-left>  b
+noremap <C-right> e
+noremap <C-up>    (
+noremap <C-down>  )
 
 " re-select visual area after indenting
 vnoremap > >gv

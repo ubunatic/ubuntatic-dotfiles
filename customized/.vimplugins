@@ -3,13 +3,14 @@
 
 " Plugin 'Shougo/neocomplete'
 " Plugin 'ervandew/supertab'
-Plugin 'SirVer/ultisnips'
+" Plugin 'SirVer/ultisnips' " throws a lot of errors lately
 Plugin 'Valloric/YouCompleteMe'
 
 Plugin 'fatih/vim-go'
 Plugin 'honza/vim-snippets'
 
 Plugin 'shawncplus/phpcomplete.vim'
+Plugin 'kchmck/vim-coffee-script'
 
 let g:phpcomplete_mappings = {
 \ 'jump_to_def':        '<leader>gd',
