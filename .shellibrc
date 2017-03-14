@@ -13,6 +13,6 @@ export SL_DEBUG=false
 export SL_RELOAD_PLUGINS=true
 
 # define the plugins you need (see .shellib/ for plugin names)
-export SL_PLUGINS="utils epoch path soundboard"
+export SL_PLUGINS="utils epoch path soundboard bluximity clock"
 
 # vim:ft=sh:

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 
+# add files that should be symlinked here
 BASE_FILES=(
 .tmux.conf
 .vimrc
@@ -8,8 +9,10 @@ BASE_FILES=(
 .shellibrc
 .shellib
 .ctags
+.ipython/profile_default/ipython_config.py
 )
 
+# add files that should be copied once here
 COPY_FILES=(
 .profile
 .vimplugins
@@ -44,8 +47,8 @@ usage() {
 	Options:
 
 		--all     create links for copy-once files
-		--force   overwrite existng links
-		--clean   removes backup files TRG_DIR/FILE[0-9~]+
+		--force   overwrite any existng links
+		--clean   remove backup files TRG_DIR/FILE[0-9~]+
 		--diff    show diff for updated or skipped files
 
 		--help    show this usage info
