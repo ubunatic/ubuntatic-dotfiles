@@ -9,27 +9,43 @@ BASE_FILES=(
 .shellibrc
 .shellib
 .ctags
+.googlerc
 .ipython/profile_default/ipython_config.py
 )
 
 # add files that should be copied once here
-COPY_FILES=(
+EXTRA_FILES=(
 .profile
 .vimplugins
 )
 
-warn(){ echo $@ 1>&2; false;  }
-fail(){ echo $@ 1>&2; exit 1; }
+CUSTOM_FILES=(
+customized/.profile
+customized/.vimplugins
+)
+
+debug() { $DEBUG && echo $@ 1>&2; true;  }
+log()   { echo $@ 1>&2; }
+warn()  { echo $@ 1>&2; }
+fail()  { echo $@ 1>&2; exit 1; }
+panic() { echo $@ 1>&2; exit 1; }
 
 target_exists(){ test -e "$@" || test -L "$@";  }
 file_exists()  { test -e "$@";                  }
 
-create_link()  { ln -snr "$1" "$2";             }
-update_link()  { ln $UPDATE_OPT -snr "$1" "$2"; }
+create_link()  { ln -snr    "$1" "$2"; }
+update_link()  { ln -snr -b "$1" "$2"; }
+
+target_path(){
+	if test `dirname "$1"` = "customized"
+	then echo $TRG_DIR/`basename "$1"`
+	else echo $TRG_DIR/$1
+	fi
+}
 
 clean(){
 	if $CLEAN; then
-		trg="$@"
+		trg="`target_path "$1"`"
 		if file_exists "$trg"; then
 			if backups=(`find "$trg"* -maxdepth 0 | grep -e "$trg[0-9~]\+"`)
 			then rm ${backups[@]}; warn "removed backups: ${backups[@]}"
@@ -46,18 +62,22 @@ usage() {
 
 	Options:
 
-		--all     create links for copy-once files
-		--force   overwrite any existng links
-		--clean   remove backup files TRG_DIR/FILE[0-9~]+
-		--diff    show diff for updated or skipped files
+		--force           overwrite any existng links
+		--copy-customized copy-once customized files instead of copying-once extra files
+      --link-customized create links to customized files instead of copying extra files
 
-		--help    show this usage info
-		--debug   more logging
+		--clean           remove backup files TRG_DIR/FILE[0-9~]+
+		--diff            show diff for updated or skipped files
+		--difftool        show diff using git's diff.tool
+
+		--help            show this usage info
+		--debug           more logging
 
 	Files:
 
-		Main files are:      ${BASE_FILES[@]}
-		Copy-once files are: ${COPY_FILES[@]}
+		Main files are:        ${BASE_FILES[@]}
+		Copy-once files are:   ${EXTRA_FILES[@]}
+		Customized files are:  ${CUSTOM_FILES[@]}
 
 	EOF
 }
@@ -72,26 +92,28 @@ files_skipped=0
 
 SRC_DIR=`readlink -f $(dirname "$0")` || fail "could not determine script dir"
 TRG_DIR="$HOME"
+TRG_DIR_EXPR='$HOME'
 
 FORCE=false
 CLEAN=false
 DIFF=false
-FILES=(${BASE_FILES[@]})
+DIFF_CMD=diff
+DIFF_TOOL=`git config diff.tool 2>/dev/null || echo diff`
+LINK_FILES=(${BASE_FILES[@]})
 test -z "$DEBUG" && DEBUG=false
 
 # parse options
 for opt in $@; do case $opt in
-	--help)  usage; exit 1;;
-	--all)   FILES=(${BASE_FILES[@]} ${COPY_FILES[@]})
-		      COPY_FILES=();;
-	--clean) CLEAN=true;;
-	--force) FORCE=true;;
-	--debug) DEBUG=true;;
-	--diff)  DIFF=true;;
-	*)       ;;
+	--help)            usage; exit 1;;
+	--link-customized) LINK_FILES=(${BASE_FILES[@]} ${CUSTOM_FILES[@]}); COPY_FILES=();;
+	--copy-customized) LINK_FILES=(${BASE_FILES[@]}); COPY_FILES=(${CUSTOM_FILES[@]});;
+	--clean)           CLEAN=true;;
+	--force)           FORCE=true;;
+	--debug)           DEBUG=true;;
+	--difftool)        DIFF=true; DIFF_CMD="$DIFF_TOOL";;
+	--diff)            DIFF=true;;
+	*)                 ;;
 esac done
-
-UPDATE_OPT="-b"
 
 # access target and source dirs
 test -d "$TRG_DIR" || fail "TRG_DIR dir not found: $TRG_DIR"
@@ -100,9 +122,9 @@ cd "$SRC_DIR"      || fail "cannot access source dir: $SRC_DIR"
 warn "using target dir: $TRG_DIR"
 
 # create/update links
-for src in ${FILES[@]}; do
-	lnk="$TRG_DIR/$src"
-	$DEBUG && warn "processing link: $lnk -> $SRC_DIR/$src"
+for src in ${LINK_FILES[@]}; do
+	lnk="`target_path "$src"`"
+	debug "processing link: $lnk -> $SRC_DIR/$src"
 	if   ! file_exists $src; then
 
 		(( errors++ )); warn "source file not found: $src"
@@ -110,7 +132,7 @@ for src in ${FILES[@]}; do
 	elif ! target_exists $lnk; then
 
 		if create_link "$src" "$lnk"
-		then (( created++ )); warn "created link: $lnk"; clean $lnk
+		then (( created++ )); log  "created link: $lnk"; clean $lnk
 		else (( errors++  )); warn "failed to create link: $lnk"
 		fi
 
@@ -118,31 +140,31 @@ for src in ${FILES[@]}; do
 		rl_src="`readlink -f "$src"`"
 		rl_lnk="`readlink -f "$lnk"`"
 		if test "$rl_src" = "$rl_lnk"
-		then (( skipped++ )); warn "link already up-to-date: $lnk -> $rl_src"
+		then (( skipped++ )); log "link already up-to-date: $lnk -> $rl_src"
 		elif $FORCE; then
 			if update_link "$src" "$lnk"
-			then (( updated++ )); warn "updated link: $lnk"; clean $lnk
+			then (( updated++ )); log  "updated link: $lnk"; clean $lnk
 			else (( errors++  )); warn "failed to update link: $lnk"
 			fi
-		else (( skipped++ )); warn "skipping existing link: $lnk";
+		else (( skipped++ )); log "skipping existing link: $lnk";
 		fi
 	fi
 
-	if $DEBUG; then warn $lnk*; warn; fi
+	debug -e $lnk* "\n"
 
 done
 
 # add customizable copy-once files
 for src in ${COPY_FILES[@]}; do
-	trg="$TRG_DIR/$src"
+	trg="`target_path $src`"
 	if file_exists $trg;
-	then (( files_skipped++ )); warn "preserving existing file: $trg"
+	then (( files_skipped++ )); log "preserving existing file: $trg"
 	elif cp "$src" "$trg"
-	then (( files_created++ )); warn "copied file: $trg"
+	then (( files_created++ )); log "copied file: $trg"
 	fi
 	if $DIFF; then
-		warn "diff $src $trg"
-		diff $src "$trg" 1>&2
+		log "$DIFF_CMD $src $trg"
+		$DIFF_CMD $src "$trg" 1>&2
 	fi
 done
 
@@ -150,33 +172,33 @@ done
 source_host="$TRG_DIR/.profile"
 source_tag="# generated by shellib"
 source_msg="(do not edit manually)"
-source_script="source $TRG_DIR/.shellib/shellib.sh"
+source_script="source $TRG_DIR_EXPR/.shellib/shellib.sh"
 source_line="$source_script $source_tag $source_msg"
-SED_OPTS="--follow-symlinks -i~"
+SED_OPTS="--follow-symlinks -i"
 
-if host_line=`grep -E "$source_tag" "$source_host"`; then
+if host_line=`grep "$source_tag" "$source_host"`; then
 
 	if test "$host_line" = "$source_line"
-	then source_status=skipped; warn "source script already up-to-date, found source line '$source_line' in $source_host"
+	then source_status=skipped; log "source script already up-to-date, found source line '$source_line' in $source_host"
 	elif sed $SED_OPTS "s@.*$source_tag.*@$source_line@" "$source_host"
-	then source_status=updated; warn "updated source script in profile: $source_host"; clean $source_host
+	then source_status=updated; log "updated source script in profile: $source_host"; clean $source_host
 	else (( errors++ )); warn "failed to update source script in profile: $source_host"
 	fi
 
 
-elif grep -e "shellib.sh" "$source_host" 1> /dev/null; then
+elif grep "shellib.sh" "$source_host" 1> /dev/null; then
 
 	if $FORCE; then
 		if sed $SED_OPTS "s@.*shellib.sh.*@$source_line@" "$source_host"
-		then source_status=updated; warn "forcefully updated altered source script in $source_host"; clean $source_host
+		then source_status=updated; log "forcefully updated altered source script in $source_host"; clean $source_host
 		else (( errors++ )); warn "failed to update altered source script in $source_host"
 		fi
-	else source_status=skipped; warn "found altered source script in $source_host, skipping update"
+	else source_status=skipped; log "found altered source script in $source_host, skipping update"
 	fi
 
 else
 	if echo "$source_line" >> "$source_host"
-	then source_status=appended; warn "appended source script in $source_host"
+	then source_status=appended; log "appended source script in $source_host"
 	else (( errors++ )); warn "failed to append source script in $source_host"
 	fi
 fi
@@ -196,34 +218,34 @@ for src in .vim/spell/*; do
 	trg="$TRG_DIR/$src"
 	if file_exists "$trg"; then
 		if diff "$trg" "$src" > /dev/null
-		then (( files_skipped++ )); warn "$trg and $src are equal, skipping to merge"
+		then (( files_skipped++ )); log "$trg and $src are equal, skipping to merge"
 		else
-			warn -n "updating spell file: $trg (..."
+			log -n "updating spell file: $trg (..."
 
 			if cp "$trg" "$trg~" 
-			then warn -ne "\b\b\bbackup,..."
-			else warn -e  "ERROR)"; warn "failed to backup spell file: $trg"; continue
+			then log -ne "\b\b\bbackup,..."
+			else log -e  "ERROR)"; warn "failed to backup spell file: $trg"; continue
 			fi
 
 			if cat "$src" "$trg" | sort -u > "$src".tmp; then
-				warn -ne "\b\b\b sorted, merged,..."
+				log -ne "\b\b\b sorted, merged,..."
 
 				if diff "$trg" "$src".tmp > /dev/null
 				then
-					warn -e "\b\b\b skipped)"; (( files_skipped++ )); rm "$src".tmp
-					warn "$trg and merge file are equal, skipping to merge"
+					log -e "\b\b\b skipped)"; (( files_skipped++ )); rm "$src".tmp
+					log "$trg and merge file are equal, skipping to merge"
 				elif mv "$src".tmp "$trg"
-				then warn -e "\b\b\b saved)"; (( files_updated++ ))
-				else warn -e "\b\b\b ERROR)"; (( errors++ ))
+				then log -e "\b\b\b saved)"; (( files_updated++ ))
+				else log -e "\b\b\b ERROR)"; (( errors++ )); warn "failed to move spell file"
 				fi
 			else
-				warn -e "ERROR)"; (( errors++ ));
+				log -e "ERROR)"; (( errors++ ));
 				warn "spell file merge failed: $trg <- $trg\.tmp"
 			fi
 		fi
 	else
 		if mkdir -p "`dirname $trg`" && cp -u "$src" "$trg"
-		then (( files_created++ )); warn "spell file copied: $src -> $trg";
+		then (( files_created++ )); log  "spell file copied: $src -> $trg";
 		else (( errors++ ));        warn "failed to copy spell file: $src -> $trg";
 		fi
 	fi

@@ -1,0 +1,16 @@
+#
+# Make sure to fix this file in case a new Google SDK installer break it's structure
+#
+
+GCLOUD_SDK=/home/juve/apps/google-cloud-sdk
+if test -d "$GCLOUD_SDK"; then
+	addPATH $GCLOUD_SDK/bin
+	if test -n "$ZSH_VERSION"
+	then GCLOUD_COMPLETION="$GCLOUD_SDK/completion.zsh.inc"
+	else GCLOUD_COMPLETION="$GCLOUD_SDK/completion.bash.inc"
+	fi
+	if test -f $GCLOUD_COMPLETION
+	then source $GCLOUD_COMPLETION
+	fi
+fi
+
