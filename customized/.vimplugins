@@ -12,6 +12,8 @@ Plugin 'honza/vim-snippets'
 Plugin 'shawncplus/phpcomplete.vim'
 Plugin 'kchmck/vim-coffee-script'
 
+Plugin 'leafgarland/typescript-vim'
+
 let g:phpcomplete_mappings = {
 \ 'jump_to_def':        '<leader>gd',
 \ 'jump_to_def_split':  '<leader>gs',

@@ -71,6 +71,7 @@ test -d "$BASE16_DIR" || BASE16_DIR=$HOME/.config/base16-shell
 
 if test -d "$BASE16_DIR"
 then
+	# other cool clors: gruvbox-dark-pale/soft hopscotch materia monokai oceanicnext onedark
 	source "$BASE16_DIR/scripts/base16-default-dark.sh"
 	if ! which colortest > /dev/null
 	then
