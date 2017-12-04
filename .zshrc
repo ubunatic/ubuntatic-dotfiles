@@ -58,7 +58,7 @@ copydir copyfile cp dircycle docker-compose docker go govendor\
 rsync sudo node npm urltools vagrant vim-interaction \
 web-search z zsh-navigation-tools zsh_reload git-prompt \
 grunt npm node postgres sbt scala ubuntu gradle maven kubectl
-python) 
+python pip drone) 
 
 source $ZSH/oh-my-zsh.sh
 
@@ -103,3 +103,5 @@ export MANPATH="/usr/local/man:$MANPATH"
 #DEBUG export LAST_ZSHRC_SOURCE_DURATION="$t_zshsource ms"
 #DEBUG export LAST_ZSHRC_SOURCE_TIME="`date`"
 
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh

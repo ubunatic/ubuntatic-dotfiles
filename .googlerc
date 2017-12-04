@@ -2,7 +2,7 @@
 # Make sure to fix this file in case a new Google SDK installer break it's structure
 #
 
-GCLOUD_SDK=/home/juve/apps/google-cloud-sdk
+GCLOUD_SDK="$HOME/apps/google-cloud-sdk"
 if test -d "$GCLOUD_SDK"; then
 	addPATH $GCLOUD_SDK/bin
 	if test -n "$ZSH_VERSION"
@@ -14,3 +14,4 @@ if test -d "$GCLOUD_SDK"; then
 	fi
 fi
 
+# vim: ft=sh

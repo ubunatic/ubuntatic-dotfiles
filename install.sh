@@ -11,6 +11,7 @@ BASE_FILES=(
 .ctags
 .googlerc
 .ipython/profile_default/ipython_config.py
+.flake8
 )
 
 # add files that should be copied once here
@@ -24,11 +25,13 @@ customized/.profile
 customized/.vimplugins
 )
 
-debug() { $DEBUG && echo $@ 1>&2; true;  }
-log()   { echo $@ 1>&2; }
-warn()  { echo $@ 1>&2; }
-fail()  { echo $@ 1>&2; exit 1; }
 panic() { echo $@ 1>&2; exit 1; }
+
+SCRIPT_DIR="`dirname $0`"
+if source $SCRIPT_DIR/.shellib/shellib.sh;
+then log "shellib loaded"
+else panic "failed to load $SCRIPT_DIR/.shellib/shellib.sh"
+fi
 
 target_exists(){ test -e "$@" || test -L "$@";  }
 file_exists()  { test -e "$@";                  }
@@ -51,7 +54,7 @@ clean(){
 			then rm ${backups[@]}; warn "removed backups: ${backups[@]}"
 			fi
 		else
-			fail "internal error: cannot clean backups of non-existing links"
+			panic "internal error: cannot clean backups of non-existing links"
 		fi
 	fi
 }
@@ -62,16 +65,16 @@ usage() {
 
 	Options:
 
-		--force           overwrite any existng links
-		--copy-customized copy-once customized files instead of copying-once extra files
-      --link-customized create links to customized files instead of copying extra files
-
-		--clean           remove backup files TRG_DIR/FILE[0-9~]+
-		--diff            show diff for updated or skipped files
-		--difftool        show diff using git's diff.tool
-
-		--help            show this usage info
-		--debug           more logging
+	   --force             overwrite any existng links
+	   --copy-customized   copy-once customized files instead of copying-once extra files
+	   --link-customized   create links to customized files instead of copying extra files
+      
+	   --clean             remove backup files TRG_DIR/FILE[0-9~]+
+	   --diff              show diff for updated or skipped files
+	   --difftool          show diff using git's diff.tool
+      
+	   --help              show this usage info
+	   --debug             more logging
 
 	Files:
 
@@ -90,7 +93,7 @@ files_updated=0
 files_created=0
 files_skipped=0
 
-SRC_DIR=`readlink -f $(dirname "$0")` || fail "could not determine script dir"
+SRC_DIR=`readlink -f $(dirname "$0")` || panic "could not determine script dir"
 TRG_DIR="$HOME"
 TRG_DIR_EXPR='$HOME'
 
@@ -116,8 +119,8 @@ for opt in $@; do case $opt in
 esac done
 
 # access target and source dirs
-test -d "$TRG_DIR" || fail "TRG_DIR dir not found: $TRG_DIR"
-cd "$SRC_DIR"      || fail "cannot access source dir: $SRC_DIR"
+test -d "$TRG_DIR" || panic "TRG_DIR dir not found: $TRG_DIR"
+cd "$SRC_DIR"      || panic "cannot access source dir: $SRC_DIR"
 
 warn "using target dir: $TRG_DIR"
 

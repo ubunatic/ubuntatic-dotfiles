@@ -5,39 +5,73 @@ mapclear!
 
 set nocompatible
 filetype off
+
 set rtp+=~/.vim/bundle/Vundle.vim
-call vundle#begin()
+" call vundle#begin()
+call plug#begin('~/.vim/bundle')
+
+" common plugins, useful for all kinds of hosts
+" Plug 'VundleVim/Vundle.vim'
+
+Plug 'inkarkat/vim-SyntaxRange'
+Plug 'chriskempson/base16-vim'
+Plug 'itchyny/lightline.vim'
+Plug 'vim-syntastic/syntastic'
+Plug 'Xuyuanp/nerdtree-git-plugin'
+Plug 'majutsushi/tagbar'
+Plug 'tpope/vim-surround'
+Plug 'octol/vim-cpp-enhanced-highlight'
+Plug 'jlanzarotta/bufexplorer'
+Plug 'airblade/vim-gitgutter'
+Plug 'moll/vim-bbye'
+
+" python stuff
+Plug 'vim-scripts/indentpython.vim'
+" python with virtualenv support
+" python << EOF
+" import os, sys
+" venv_dir = os.environ.get('VIRTUAL_ENV')
+" if venv_dir:
+"   script   = os.path.join(venv_dir, 'bin/activate_this.py')
+"   exec(script, dict(__file__=script))
+" EOF
+
+
+Plug 'junegunn/fzf',           { 'dir': '~/.fzf', 'do': './install --all' }
+Plug 'junegunn/fzf.vim'
+
+" Mapping selecting mappings
+nmap <leader><tab> <plug>(fzf-maps-n)
+xmap <leader><tab> <plug>(fzf-maps-x)
+omap <leader><tab> <plug>(fzf-maps-o)
+
+Plug 'scrooloose/nerdTree',    { 'on': 'NERDTreeToggle' }
+Plug 'Valloric/YouCompleteMe', { 'do': './install.py' }
+Plug 'fatih/vim-go',           { 'do': ':GoInstallBinaries', 'for': 'go' }
+
+" TODO: move to .dotfiles/install.sh
+Plug 'chriskempson/base16-gnome-terminal'
+Plug 'chriskempson/base16-shell'
+
+" Plug 'junegunn/goyo.vim', { 'for': 'markdown' }
+" autocmd! User goyo.vim echom 'Goyo is now loaded!'
 
 " let g:polyglot_disabled = ['go']
 
-" common plugins, useful for all kinds of hosts
-Plugin 'VundleVim/Vundle.vim'
 " Plugin 'sheerun/vim-polyglot'
-Plugin 'majutsushi/tagbar'
-Plugin 'SyntaxRange'
-Plugin 'scrooloose/nerdTree'
-Plugin 'moll/vim-bbye'
-Plugin 'tpope/vim-surround'
 " Plugin 'tpope/vim-markdown'
 " Plugin 'jtratner/vim-flavored-markdown'
-Plugin 'Xuyuanp/nerdtree-git-plugin'
-Plugin 'chriskempson/base16-vim'
 " Plugin 'jiangmiao/auto-pairs' "does not handle dynamic reloads with my mappings
 
 " let Vundle pull some non vim stuff
-" TODO: move to .dotfiles/install.sh
-Plugin 'chriskempson/base16-gnome-terminal'
-Plugin 'chriskempson/base16-shell'
-Plugin 'ctrlpvim/ctrlp.vim'
+" Plugin 'ctrlpvim/ctrlp.vim'
 " Plugin 'dhruvasagar/vim-table-mode'
 " Plugin 'chrisbra/NrrwRgn'
 " Plugin 'ubunatic/colorizer'
 " Plugin 'godlygeek/tabular'
-" Plugin 'plasticboy/vim-markdown'
-Plugin 'octol/vim-cpp-enhanced-highlight'
-Plugin 'rdnetto/YCM-Generator'
-Plugin 'vim-syntastic/syntastic'
-Plugin 'wincent/command-t'
+Plug 'plasticboy/vim-markdown'
+" Plugin 'wincent/command-t'
+" Plugin 'rdnetto/YCM-Generator'
 
 " Plugin 'LucHermitte/lh-vim-lib'
 " Plugin 'LucHermitte/lh-tags'
@@ -51,6 +85,11 @@ Plugin 'wincent/command-t'
 " 
 " Plugin 'LucHermitte/vim-refactor'
 
+" disable autocomplete trigger (since it does not work)
+" let g:completor_auto_trigger = 0
+
+" use C-space to  trigger completion
+" inoremap <expr> <C-space> pumvisible() ? "\<C-n>" : "\<C-x>\<C-u>\<C-p>"
 
 " === VIM Plugin Automation ===
 "
@@ -74,7 +113,8 @@ endif
 " Plugin 'Valloric/YouCompleteMe'
 "
 
-call vundle#end()            " required
+
+call plug#end()              " required
 filetype plugin indent on    " required
 
 " === Syntastic ===
@@ -88,6 +128,7 @@ let g:syntastic_check_on_wq = 0
 let g:syntastic_auto_loc_list = 3   "0 no auto, 1 auto open, 2 auto close, 3 auto open leave open
 let g:syntastic_auto_jump = 1
 let g:syntastic_enable_highlighting = 1
+let g:syntastic_python_checkers=['flake8'] " make sure to `pip install flake8 --user`
 
 " === Colors ===
 
@@ -115,8 +156,8 @@ function! CommonSyntaxRanges() abort
 	call SyntaxRange#Include("awk\ [^|']*'\ ",                 "\ '",         'awk',  'NonText')
 	call SyntaxRange#Include("awk\ [^|']*'$",                  "^[\t\ ]*'",   'awk',  'NonText')
 	
-	call SyntaxRange#Include('[a-z]*sql[a-z]*\ \"',            '\"$', 'sql',  'NonText')
-	call SyntaxRange#Include('[a-z]*sql[a-z]*.*\ \(-c\)\ \"',  '\"$', 'sql',  'NonText')
+	" call SyntaxRange#Include('[a-z]*sql[a-z]*\ \"',            '\"$', 'sql',  'NonText')
+	" call SyntaxRange#Include('[a-z]*sql[a-z]*.*\ \(-c\)\ \"',  '\"$', 'sql',  'NonText')
 
 	call SyntaxRange#Include("node\ -e\ '$",                   "^[\t\ ]*'",   'javascript',   'NonText')
 	call SyntaxRange#Include("node\ -e\ '\ ",                  "\ '",         'javascript',   'NonText')
@@ -220,6 +261,12 @@ if has("autocmd")
 		" reopen current fold after saving go file
 		" since goformat destroys folds on write
 		au BufNewFile,BufRead *.md,*.markdown,*.txt setlocal filetype=markdown
+		au BufNewFile,BufRead *.iced set filetype=coffee
+	augroup END
+
+	augroup whitespace
+		au!
+		" au BufRead,BufNewFile *.py,*.pyw,*.c,*.h match BadWhitespace /\s\+$/
 	augroup END
 
 	augroup vimgo
@@ -259,26 +306,14 @@ endif
 
 if has("gui")
 	let g:myfontnum = 0
-	let g:myfonts   = [
-				\ 'Ubuntu\ Mono\ 11',
-				\ 'Ubuntu\ Mono\ 12',
-				\ 'Ubuntu\ Mono\ 13',
-				\ 'Ubuntu\ Mono\ 14',
-				\ 'Ubuntu\ Mono\ 15',
-				\ 'Ubuntu\ Mono\ 16',
-				\ 'Liberation\ Mono\ 10',
-				\ 'Liberation\ Mono\ 11',
-				\ 'Liberation\ Mono\ 12',
-				\ 'Liberation\ Mono\ 13',
-				\ 'Liberation\ Mono\ 14',
-				\ 'Liberation\ Mono\ 15',
-				\ 'DejaVu\ Sans\ Mono\ 10',
-				\ 'DejaVu\ Sans\ Mono\ 11',
-				\ 'DejaVu\ Sans\ Mono\ 12',
-				\ 'DejaVu\ Sans\ Mono\ 13',
-				\ 'DejaVu\ Sans\ Mono\ 14',
-				\ 'DejaVu\ Sans\ Mono\ 15'
-				\]
+	" let g:myfontname = 'Ubuntu\ Mono\ '
+	" let g:myfontname = 'Liberation\ Mono\ '
+	let g:myfontname = 'DejaVu\ Sans\ Mono\ '
+	let g:myfonts = []
+	for i in [ 10, 11, 12, 13, 14, 16, 18, 22 ]
+		let g:myfonts = g:myfonts + [ g:myfontname.i ]
+	endfor
+
 	function! NextFont(...)
 		let g:myfontnum += 1
 		if a:0 > 0
@@ -292,6 +327,9 @@ if has("gui")
 
 	nmap <leader>f :call NextFont()<CR>
 	nmap <leader>- :call NextFont(g:myfontnum - 1)<CR>
+	nmap <leader>+ :call NextFont()<CR>
+	nmap <kPlus>  :call NextFont()<CR>
+	nmap <kMinus> :call NextFont(g:myfontnum - 1)<CR>
 
 	call NextFont(1)
 	" only fiddle with lines and cols if window is very small
@@ -371,9 +409,12 @@ map <leader>pb :CtrlPBuffer<CR>
 map <leader>pp :CtrlPMixed<CR>
 map <leader>p  :CtrlPMixed<CR>
 
+let g:mycd_last_dir = $PWD
 function! MyCD(...)
 	if a:0 == 0
 		let path = $PWD
+	elseif a:1 == "-"
+		let path = g:mycd_last_dir
 	else
 		let path = a:1
 	endif
@@ -382,12 +423,19 @@ function! MyCD(...)
 	if exists("*NERDTreeCWD")
 		call NERDTreeCWD()
 	endif
+	let g:mycd_last_dir = path
 endfunction
 command! -nargs=* CD :call MyCD(<f-args>)
 
 " When pressing <leader>cd switch to the directory of the open buffer
+map <leader>mc  :map <leader>c<CR>
+map <leader>cf  :call MyCD(expand("%:p:h"))<CR>
 map <leader>cd  :call MyCD(expand("%:p:h"))<CR>
-map <leader>ncd :call MyCD()<CR>
+map <leader>c-  :call MyCD('-')<CR>
+map <leader>c.. :call MyCD('..')<CR>
+map <leader>cp  :call MyCD()<CR>
+map <leader>cc  :call MyCD()<CR>
+map <leader>cc  :call MyCD()<CR>
 
 " === Grep Mappings ===
 
@@ -529,9 +577,8 @@ set shellslash        " do not convert backslash path chars to forward slashes A
 " set shortmess=+atT    " truncate and abbreviate shell messages
 set ttyfast           " indicate fast terminal: better/smooth scrolling
                       " extra screenline characters??
-set guioptions-=a     " disable autocopy using mouse and visual;
-set guioptions+=A     " enable  autocopy using mouse but not visual;
-                      " works independently of :y[ank]
+set guioptions+=a     " disable autocopy using mouse and visual;
+" set guioptions+=A     " enable  autocopy using mouse but not visual; works independently of :y[ank]
 set guioptions-=m     " remove menu bar
 set guioptions-=T     " remove toolbar
 set guioptions-=R     " remove right-hand scroll bar
@@ -556,11 +603,12 @@ vmap <C-f> y/<C-R>"<CR>N:promptfind<CR>
 vmap <C-h> y/<C-R>"<CR>N:promptrepl<CR>
 
 " fold/unfold + toggle folding
-nnoremap <space> za
-nnoremap <C-space> zi
+" map <space> za
+" map <C-space> zi
 
 " omin complete
 map! <C-space> <C-x><C-o>
+map! <C-tab> <C-x><tab>
 
 " switch buffers
 map <A-up>   <ESC>:bp<CR>
@@ -581,6 +629,7 @@ nmap <leader>l :call EchoToggle('list')<CR>
 nmap <leader>n :call EchoToggle('number')<CR>
 nmap <leader>x :set nonumber<CR>:set nolist<CR>:set nowrap<CR>:set nospell<CR>:echo "[n]umber, [w]rap, [l]ist, and [s]pell disabled"<CR>
 
+" next spell, prev spell, bad spell, good spell + goto next short cuts
 nnoremap zn ]s
 nnoremap zp [s
 nnoremap zb zw
@@ -589,16 +638,16 @@ nnoremap zz zg]s
 " hide highlights
 nmap <ESC><space> :nohl<CR>
 
-nmap <leader>ee :tabe %:p:h/<cfile><CR>
+" nmap <leader>ee :tabe %:p:h/<cfile><CR>
 " test here .zshrc
 
 " open file dialog mapped to <leader>o
 " let g:browsefilter="All files\t*.*\n"
-nmap <leader>o :browse tabe<CR>
+" nmap <leader>o :browse tabe<CR>
 
 " save file dialog mapped to <C-S-s>
-nnoremap <leader>s :browse saveas<CR>
-vnoremap <leader>s <ESC>:browse saveas<CR>gv
+" nnoremap <leader>s :browse saveas<CR>
+" vnoremap <leader>s <ESC>:browse saveas<CR>gv
 
 " close current buffer after switching to previous buffer
 nnoremap <leader>q :Bdelete<CR>
@@ -606,12 +655,12 @@ nnoremap <leader>q :Bdelete<CR>
 " nmap <leader>q :b#<bar>bd#<CR>
 
 " other leader mappings
-map <A-left>  :NERDTreeToggle<CR>
+map <A-left> :NERDTreeToggle<CR>
 
 " save using <C-s>
-nnoremap <C-s>  <ESC>:w<CR>
-vnoremap <C-s>  <ESC>:w<CR>gv
-noremap! <C-s>  <ESC>:w<CR>gi
+nnoremap <C-s> <ESC>:w<CR>
+vnoremap <C-s> <ESC>:w<CR>gv
+noremap! <C-s> <ESC>:w<CR>gi
 " test here in insert mode: 123
 
 " map increase/decrease to new keys

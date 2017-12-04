@@ -20,6 +20,9 @@ fi
 # set PATH so it includes user's private bin directories
 addPATH $HOME/bin
 addPATH $HOME/.local/bin
+for bin_dir in $HOME/.gem/ruby/*/bin; do
+	addPATH $bin_dir
+done
 
 # === Custom Settings ===
 
@@ -45,14 +48,41 @@ alias gsay="/usr/local/bin/google_speech"
 alias prettyjson='python -m json.tool'
 alias hadoop-screen="ssh -t name-node screen -R -s bash"
 alias psql="sudo -u postgres psql"
+alias gpo="git rev-parse --abbrev-ref HEAD | xargs git push --set-upstream origin"
+alias gmm="git fetch --all && git merge origin/master --ff"
 
-# create/export a dir to store all go tools
+# add script to start ipython in virtual env from anywhere
+IPYTHON=$HOME/.local/bin/ipython
+if ! which ipython && ! test -e $IPYTHON && which virtualenv; then
+	virtualenv -p python2 $HOME/.uenv > /dev/null
+	cat > $IPYTHON <<-SH
+		#!/usr/bin/env bash
+		set -o errexit
+		. \$HOME/.uenv/bin/activate
+		if ! pip freeze | grep '^ipython==.*$' > /dev/null
+		then echo "please run bash -c '. \$HOME/.uenv/bin/activate && pip install ipython --upgrade' first"
+		else python -m IPython \$@
+		fi
+	SH
+	chmod +x $IPYTHON
+fi > /dev/null
+
+# disable capslock
+(
+	xmodmap -e "remove lock = Caps_Lock" # does not work in unity
+	setxkbmap -option caps:none          # works in unity
+) 2>/dev/null
+
+test -f "$HOME/.hosts" && export HOSTALIASES="$HOME/.hosts" # setup host aliases
+
+# create/export a dir to store all go tools and the go runtime
+export GOROOT=$HOME/apps/go
 export GOTOOLS=$HOME/.gotools
 mkdir -p $GOTOOLS
+mkdir -p $GOROOT
 addPATH $GOTOOLS/bin
-
+addPATH $GOROOT/bin
 export GOPATH=$GOTOOLS:$HOME/git/go
-export GOROOT=$GOTOOLS
 
 # use `setgopath` in go projects where required
 alias setgopath="export GOPATH=\$PWD"
@@ -62,7 +92,12 @@ export ECLIPSE_HOME=$HOME/apps/eclipse/java-neon
 addPATH $ECLIPSE_HOME
 
 export PYTHONDONTWRITEBYTECODE=true              # avoid having pyc files created
-export PYTHONPATH="lib/python:python/src:python" # look for my modules in common lib dirs
+export PYTHONPATH="python/src:lib/python:python" # look for my modules in common lib dirs
+
+export WORKON_HOME=$HOME/.virtualenvs
+export PROJECT_HOME=$HOME/git
+source $HOME/.local/bin/virtualenvwrapper.sh > /dev/null || true
+
 
 # find base16 installation either managed by Vundle in .vim
 # or managed manually in .config
@@ -79,20 +114,113 @@ then
 	fi
 fi
 
-findJDK() {( java=`which java` && dir=`dirname "$java"` && readlink -e "$dir/../.." ) 2> /dev/null; }
-
 random(){ shuf -i0-$1 -n1; }
 
-passwort_gen(){ git/dotfiles/scripts/password_gen.py $@; }
+passwort_gen(){ $HOME/git/dotfiles/scripts/password_gen.py $@; }
+
+flatten_pdf(){ pdf2ps "$1" - | ps2pdf - "$1"-flattened.pdf; }
+
+watchfile(){
+	local file=$1; shift;
+	local cmd=$@
+	echo "# watching $file, close_write event will trigger '$cmd'" 1>&2
+	local last_triggered=0 dt=0
+	inotifywait -m -e close_write -e close $file | while read file events; do 
+		(( dt = `date +%s` - last_triggered ))
+		if test $dt -gt 5; then                 # wait 5s between runs
+			echo "$file $events '$cmd'" 1>&2     # print default cols + cmd col
+			sleep 5                              # delay runs by 5s to allow multiple writes to finish
+			test -n "$cmd" && $cmd               # run cmd
+			last_triggered=`date +%s`
+		fi
+	done
+}
+
+validatepdf(){
+	local pdf=$1
+	watchfile $pdf $HOME/apps/verapdf/verapdf --format text $pdf 2>&1
+	#
+	#	sed -e '/buildInformation\|releaseDetails\|duration>\|job>\|jobs>\|report>\|batchSummary\|<\?xml/d' \
+	#		 -e '/<item\|item>\|<name>/d'
+		
+}
+
+xclipper_input(){
+	case $1 in
+		p*)    xsel --primary   --input;;
+		s*)    xsel --secondary --input;;
+		c*)    xsel --clipboard --input;;
+		*)     exit 1;;
+	esac
+}
+
+xclipper_output(){
+	case $1 in
+		p*)    xsel --primary   --output;;
+		s*)    xsel --secondary --output;;
+		c*)    xsel --clipboard --output;;
+		all|*) (
+				# print all selections
+				echo -e "PRIMARY:";     xsel --primary   --output
+				echo -e "\nSECONDARY:"; xsel --secondary --output
+				echo -e "\nCLIPBOARD:"; xsel --clipboard --output
+			) 1>&2
+	esac
+}
+
+xclipper(){ xclipper_output $@; }
+
+__cliptox_usage(){
+	cat 1>&2 <<-DOC
+		cliptox copies clipboard data to X11 primary selection every $delay seconds
+		
+		Usage: $0 [OPTIONS]
+		
+		Options:
+
+		--debug         show debug output
+		--delay | -d    set the delay between each copy
+		--help          show this help
+	DOC
+}
+
+cliptox(){
+	local delay=0.1
+	local DEBUG="$DEBUG"
+	while test $# -gt 0; do case $1 in
+		--debug)    DEBUG=true;;
+		--delay|-d) delay="$2"; shift;;
+		--help)     __cliptox_usage; return 1;;
+	esac; shift; done 1>&2
+
+	time (
+		local clip_sum="" old_clip_sum=""
+		while true; do
+			clip_sum="`xsel -o -b | md5sum`"
+			if ! diff -q <(echo "$old_clip_sum") <(echo "$clip_sum") > /dev/null; then
+				echo "clip sums differ: '$clip_sum' != '$old_clip_sum'"
+				old_clip_sum="$clip_sum"
+				if ! diff -q <(xsel -o -p) <(xsel -o -b) > /dev/null; then
+					test -z "$DEBUG" || echo "selection changed: '`xsel -o -b`' <> '`xsel -o -p`'"
+					xsel -o -b | xsel -o -p
+				fi
+			fi
+			sleep $delay
+		done 1>&2
+	)
+}
+
 
 export JAVA_HOME=`findJDK`
 
-export NVM_DIR="$HOME/.nvm"
-test -s "$NVM_DIR/nvm.sh" && source "$NVM_DIR/nvm.sh" # This loads nvm
+export PATH="$HOME/.yarn/bin:$PATH"
 
-# load non-public ~/.corporaterc
-test -f $HOME/.corporaterc && source $HOME/.corporaterc
-# load google cloud sdk
-test -f $HOME/.googlerc    && source $HOME/.googlerc
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+
+test -f $HOME/.corporaterc && source $HOME/.corporaterc    # load non-public ~/.corporaterc
+test -f $HOME/.googlerc    && source $HOME/.googlerc       # load google cloud sdk
 
 # vim:ft=sh:

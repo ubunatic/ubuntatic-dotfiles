@@ -4,15 +4,13 @@
 " Plugin 'Shougo/neocomplete'
 " Plugin 'ervandew/supertab'
 " Plugin 'SirVer/ultisnips' " throws a lot of errors lately
-Plugin 'Valloric/YouCompleteMe'
+" Plug 'maralla/completor.vim'
 
-Plugin 'fatih/vim-go'
-Plugin 'honza/vim-snippets'
+" Plugin 'honza/vim-snippets'
 
-Plugin 'shawncplus/phpcomplete.vim'
-Plugin 'kchmck/vim-coffee-script'
-
-Plugin 'leafgarland/typescript-vim'
+" Plugin 'shawncplus/phpcomplete.vim'
+Plug 'kchmck/vim-coffee-script'
+Plug 'leafgarland/typescript-vim'
 
 let g:phpcomplete_mappings = {
 \ 'jump_to_def':        '<leader>gd',
@@ -65,8 +63,8 @@ let g:phpcomplete_mappings = {
 " disable AutoComplPop
 " let g:acp_enableAtStartup = 0
 " Use neocomplete
-let g:neocomplete#enable_at_startup = 1
-let g:neocomplete#enable_smart_case = 1
+" let g:neocomplete#enable_at_startup = 1
+" let g:neocomplete#enable_smart_case = 1
 
 " ag plugin
 " Plugin 'rking/ag.vim'
