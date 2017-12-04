@@ -1,7 +1,7 @@
 # Author: Uwe Jugel, uwe.jugel@gmail.com
 
 epoch(){
-	case $1 in
+	case "$1" in
 		ms|mil*)        date +%s%3N ;;
 		ns|nano*)       date +%s%N  ;;
 		µs|us|mic*)     date +%s%6N ;;

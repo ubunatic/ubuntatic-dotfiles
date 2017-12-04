@@ -1,0 +1,3 @@
+[flake8]
+ignore = E501,E231,E241,E202,E221,E701,E702,E704,E128,W503,E401,E272,E301,E271,W391,E111,E251
+exclude = ~/git/dataflow/beam.dist/sdks/python/**/*.pytest

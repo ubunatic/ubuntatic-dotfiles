@@ -35,15 +35,15 @@ __bluximity_details()     { bt-device -i `__bluximity_list | awk -v num="$@" '$1
 __bluximity_add(){
 	if ! test -z "$@"; then
 		__bluximity_listdevices | grep -i "$@" | while read d; do
-			warn "adding device $d"
+			log "adding device $d"
 			__bluximity_savemac $d
 		done
 	else
 		devices=`__bluximity_listdevices`
 		for d in $devices; do
-			warn -n "add device $d? [yN]"
+			log -n "add device $d? [yN]"
 			read key && case $key in
-				y*|Y*) warn "adding $d"; __bluximity_savemac $d;;
+				y*|Y*) log "adding $d"; __bluximity_savemac $d;;
 				*)     ;;
 			esac
 		done
@@ -52,11 +52,11 @@ __bluximity_add(){
 
 __bluximity_rm(){
 	if ! test -z "$@"; then
-		warn "removing device number '$@'"
+		log "removing device number '$@'"
 		sed -i "/^$@ /d" $__bluximity_config
 	else
 		warn "Usage: bluximity rm DEVICE_NUMBER"
 	fi
-	warn "current $__bluximity_config is"
+	log "current $__bluximity_config is"
 	cat $__bluximity_config
 }

@@ -3,30 +3,33 @@
 #
 
 checkPATH() {
-	#dir=`cd "$@" 2> /dev/null && pwd` &&      # try to access the dir (disabled, too slow!)
-	dir="$@"
-	test -d "$dir" && ! echo ":$PATH:" |
-		grep ":$dir:" > /dev/null &&            # test if it is already in the PATH
-		echo "$dir"                             # print if not in PATH and return grep exit code
+	local dir="$@"
+	if echo ":$PATH:" | grep -o ":$dir:" > /dev/null
+	then return 1  # dir already in PATH
+	else return 0  # dir not in path
+	fi
 }
 
 addPATH() {
-	if ! test -z "$@" &&	p=`checkPATH $@`
-	then export PATH="$PATH:$p" #; warn "PATH is now '$PATH'" #disabled to avoid messages at desktop login
+	local dir="$@"
+	if ! test -z "$dir" && checkPATH "$dir"
+	then export PATH="$PATH:$dir"
 	fi
 }
 
 # for all dirs modify PATH only if dir exists and is not yet in PATH
 # (ensures replayability of the script)
 updatePaths(){
-	for dir in \
+	local dir old_path="`echo "$PATH" | sed 's/:/ /g'`"
+	export PATH="/bin:/usr/bin"  # start with minimal path
+	for dir in $old_path \
 		/bin             /sbin                \
 		/usr/bin         /usr/sbin            \
 		/usr/local/bin   /usr/local/sbin      \
 		$HOME/bin        $HOME/sbin           \
 		$HOME/.local/bin $HOME/.local/sbin
 	do
-		dir=`checkPATH $dir` && export PATH="$dir:$PATH" 
+		addPATH "$dir"
 	done
 }
 
